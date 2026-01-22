@@ -3,11 +3,12 @@
 To install, paste this into your terminal.
 
 This wont work on windows, you will need to do these steps with the windows equivalents
-to get the files
+
+Run this to get the desktop files onto your computer
 ```bash
 git clone --recursive https://github.com/MistWarp/desktop mistwarp-desktop
 ```
-to update and build them
+Then run this to update and build the desktop application
 ```bash
 cd mistwarp-desktop
 git pull
