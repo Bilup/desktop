@@ -4,8 +4,8 @@
   "version": "1.0.3",
   "license": "GPL-3.0",
   "author": {
-    "email": "mist@mistium.com",
-    "name": "Sophie Kimber"
+    "email": "support@bilup.org",
+    "name": "Bilup"
   },
   "type": "commonjs",
   "scripts": {
@@ -53,14 +53,14 @@
       "terser-webpack-plugin": "^4.2.3"
     }
   },
-  "homepage": "https://desktop.warp.mistium.com/",
+  "homepage": "https://desktop.bilup.org/",
   "repository": {
     "type": "git",
     "url": "https://github.com/Bilup/desktop.git"
   },
   "bugs": {
     "url": "https://github.com/Bilup/desktop/issues",
-    "email": "mist@mistium.com"
+    "email": "support@bilup.org"
   },
   "main": "./src-main/entrypoint.js",
   "build": {

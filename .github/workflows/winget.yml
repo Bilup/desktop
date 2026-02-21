@@ -10,6 +10,6 @@ jobs:
     steps:
       - uses: vedantmgoyal9/winget-releaser@19e706d4c9121098010096f9c495a70a7518b30f
         with:
-          identifier: Mistium.Bilup
+          identifier: Org.Bilup
           installers-regex: 'Bilup-Setup-[\d.]+-\w+\.exe$'
           token: ${{ secrets.WINGET_TOKEN }}
