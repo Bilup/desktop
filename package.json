@@ -25,6 +25,7 @@
     "@babel/preset-react": "^7.13.13",
     "@electron/fuses": "^2.0.0",
     "@turbowarp/extensions": "github:TurboWarp/extensions#master",
+    "jszip": "^3.10.1",
     "adm-zip": "^0.5.16",
     "autoprefixer": "^9.8.8",
     "babel-loader": "^8.4.1",
