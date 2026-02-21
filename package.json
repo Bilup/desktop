@@ -42,7 +42,7 @@
     "react-dom": "^16.14.0",
     "react-redux": "^5.0.7",
     "redux": "^3.7.2",
-    "scratch-gui": "github:Bilup/scratch-gui#develop",
+    "scratch-gui": "git+https://github.com/Bilup/scratch-gui#develop",
     "style-loader": "^0.23.0",
     "url-loader": "^4.1.1",
     "webpack": "4.47.0",
