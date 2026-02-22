@@ -228,3 +228,4 @@ jobs:
         node scripts/upload-to-github-releases.mjs Bilup desktop "dist/*.exe"
       env:
         GH_TOKEN: "${{ github.token }}"
+ 
