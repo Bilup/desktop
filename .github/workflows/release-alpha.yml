@@ -1,12 +1,10 @@
-name: Release
+name: Release (Alpha)
 
 on:
   push:
-    tags:
-    - 'v*'
 
 permissions:
-  # required to modify releases
+  # actually not required,but I'm too lazy to delete it due to it may cause some mysterious bugs lol
   contents: write
 
 jobs:
