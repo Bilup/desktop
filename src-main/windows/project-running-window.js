@@ -97,11 +97,11 @@ class ProjectRunningWindow extends AbtractWindow {
 
     if (WEB_PROTOCOLS.includes(parsed.protocol)) {
       // Some third-party APIs (eg. YouTube embeds) require a non-empty referer header.
-      // The website being contacted already receives "turbowarp-desktop/x.y.z" in the user-agent so this isn't
+      // The website being contacted already receives "bilup-desktop/x.y.z" in the user-agent so this isn't
       // revealing any metadata that they couldn't already have access to.
       return callback({
         requestHeaders: {
-          referer: 'https://desktop.turbowarp.org/referer.html'
+          referer: 'https://desktop.bilup.org/referer.html'
         }
       });
     }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <!--
-    This file is from https://desktop.turbowarp.org/snap-mime.xml
-    It should be saved to /usr/share/mime/packages/turbowarp-desktop-snap.xml
+    This file is from https://desktop.bilup.org/snap-mime.xml
+    It should be saved to /usr/share/mime/packages/bilup-desktop-snap.xml
     Run sudo update-mime-database /usr/share/mime after creating or deleting this file.
 
     Canonical, in their infinite wisdom, do not let apps installed from snap install additional MIME
@@ -12,7 +12,7 @@
     experience.
 
     This file will tell your system that sb, sb2, and sb3 files should be treated separately so you
-    can set TurboWarp (or any other app) as the associated app without affecting normal zip files.
+    can set Bilup (or any other app) as the associated app without affecting normal zip files.
   -->
 
   <mime-type type="application/x.scratch.sb3">

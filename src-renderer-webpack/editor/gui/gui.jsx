@@ -25,7 +25,7 @@ const GUIWithProps = () => (
     // Cloud variables can be created, but not used.
     canModifyCloudData
     canUseCloud
-    cloudHost="wss://fake-clouddata-server.turbowarp.org"
+    cloudHost="wss://fake-clouddata-server.bilup.org"
 
     backpackVisible
     backpackHost="_local_"

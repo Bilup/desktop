@@ -196,7 +196,7 @@ app.on('open-file', (event, path) => {
  */
 const parseCommandLine = (argv) => {
   // argv could be any of:
-  // turbowarp.exe project.sb3
+  // bilup.exe project.sb3
   // electron.exe --inspect=sdf main.js project.sb3
   // electron.exe main.js project.sb3
 

@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const NUMBER_OF_ADDONS = 50;
-const CHANGELOG_LINK = 'https://desktop.turbowarp.org/?changelog';
+const CHANGELOG_LINK = 'https://desktop.bilup.org/?changelog';
 const SCREENSHOT_PROJECT_LINK = 'https://scratch.mit.edu/projects/425020125/';
 const translations = require('./imported.json');
 
 const parseCSV = (contents) => {
-  // Enforce consistent newline endings
+  // Enforce consistent newline endingss
   contents = contents.replace(/\r\n/g, '\n');
 
   const rows = [];

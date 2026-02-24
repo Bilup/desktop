@@ -58,7 +58,7 @@ update_flatpak() {
 	sed -E -i "s/commit: [a-f0-9]{40}/commit: $commit/" org.bilup.Bilup.yaml
 	python3 update-library.py
 	python3 update-packager.py
-	flatpak-node-generator npm ../turbowarp-desktop/package-lock.json
+	flatpak-node-generator npm ../bilup-desktop/package-lock.json
 	flatpak-builder build org.bilup.Bilup.yaml --force-clean --install --user
 	flatpak run org.bilup.Bilup
 	await_confirmation
@@ -79,7 +79,7 @@ update_aur() {
 	updpkgsums
 	makepkg --printsrcinfo > .SRCINFO
 	makepkg -si
-	turbowarp-desktop
+	bilup-desktop
 	await_confirmation
 	git stage .
 	git commit -m "Update to $version" -m "Automated"

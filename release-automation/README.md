@@ -1,3 +1,5 @@
+# This file is out-dated. Keeping it here only for reference.
+
 # Release automation scripts
 
 These are the bespoke scripts that we use to automate various aspects of releasing new versions of the app.  We publish these scripts because it's easier for us to just put them in the repository. They may be useful as a starting place for other mods. Expect to make changes.
