@@ -41,13 +41,6 @@ jobs:
           dist/*.deb
           dist/*.tar.gz
           dist/*.AppImage
-    - name: Upload artifacts to tag
-      run: |
-        node scripts/upload-to-github-releases.mjs Bilup desktop "dist/*.deb"
-        node scripts/upload-to-github-releases.mjs Bilup desktop "dist/*.tar.gz"
-        node scripts/upload-to-github-releases.mjs Bilup desktop "dist/*.AppImage"
-      env:
-        GH_TOKEN: "${{ github.token }}"
 
   release-mac:
     runs-on: macos-latest
@@ -113,11 +106,6 @@ jobs:
       with:
         name: mac
         path: dist/*.dmg
-    - name: Upload artifacts to tag
-      run: |
-        node scripts/upload-to-github-releases.mjs Bilup desktop "dist/*.dmg"
-      env:
-        GH_TOKEN: "${{ github.token }}"
 
   release-windows:
     # GitHub's Windows runners have a C: drive and a D: drive.
