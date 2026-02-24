@@ -1,7 +1,7 @@
 {
   "name": "bilup-desktop",
-  "description": "Scratch mod with a compiler, dark mode, a bunch of addons, and more.",
-  "version": "1.0.3",
+  "description": "TurboWarp mod with Chinese translations and live collaboration.",
+  "version": "1.0.0",
   "license": "GPL-3.0",
   "author": {
     "email": "support@bilup.org",
@@ -159,8 +159,8 @@
       "executableName": "Bilup-desktop",
       "artifactName": "${productName}-${os}-${arch}-${version}.${ext}",
       "icon": "./build/",
-      "synopsis": "Mod of Scratch with a compiler and more features.",
-      "description": "Bilup is a Scratch mod with a compiler to run projects faster, dark mode for your eyes, a bunch of addons to improve the editor, and more.",
+      "synopsis": "Mod of TurboWarp with total Chinese translations and live collaboration.",
+      "description": "Bilup is a TurboWarp mod with total Chinese translations and live collaboration.",
       "category": "Development",
       "desktop": {
         "entry": {
@@ -184,7 +184,7 @@
       ]
     },
     "snap": {
-      "summary": "Scratch mod with a compiler, dark mode, a bunch of addons, and more.",
+      "summary": "TurboWarp mod with Chinese translations and live collaboration.",
       "allowNativeWayland": true,
       "plugs": [
         "default",
