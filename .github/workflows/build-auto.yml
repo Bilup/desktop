@@ -21,7 +21,7 @@ jobs:
       run: npm install
     - name: Prepare extensions
       # Don't need to do a full fetch, that would just cause a lot of unnecessary traffic
-      run: node scripts/prepare-extensions.mjs
+      run: node scripts/prepare-extensions.mjs && node scripts/download-penguinmod.mjs
     - name: Compile
       run: npm run webpack:compile
     - name: Package

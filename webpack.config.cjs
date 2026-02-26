@@ -89,8 +89,7 @@ module.exports = [
                     },
                     {
                         from: 'penguinmod',
-                        to: 'penguinmod',
-                        noErrorOnMissing: true
+                        to: 'penguinmod'
                     }
                 ]
             })
