@@ -2,7 +2,7 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
-# 1.0.0 (2026-02-24)
+# 1.0.0 (2026-02-26)
 - Chinese translation
 - More extension galleries
 - Fix: Stage resize not working
