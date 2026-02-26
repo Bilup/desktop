@@ -43,12 +43,10 @@ ${code}
     });
     fs.writeFileSync(outputPath, wrapped, 'utf8');
     console.log(`Wrote ${outputPath}`);
-  })
-  .then(() => {
     console.timeEnd('Download PenguinMod extensions');
-    process.exit(0);
+    process.exitCode = 0;
   })
   .catch((err) => {
     console.error(err);
-    process.exit(1);
+    process.exitCode = 1;
   });
