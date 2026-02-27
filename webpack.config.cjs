@@ -86,10 +86,6 @@ module.exports = [
                     {
                         context: 'src-renderer-webpack/editor/gui/',
                         from: '*.html'
-                    },
-                    {
-                        from: 'penguinmod',
-                        to: 'penguinmod'
                     }
                 ]
             })

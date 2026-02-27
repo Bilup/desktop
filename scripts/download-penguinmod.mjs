@@ -4,7 +4,7 @@ import { persistentFetch } from './lib.mjs';
 
 const SOURCE = 'https://raw.githubusercontent.com/PenguinMod/PenguinMod-ExtensionsGallery/main/src/lib/extensions.js';
 
-const outputPath = pathUtil.join(import.meta.dirname, '../penguinmod/extensions.js');
+const outputPath = pathUtil.join(import.meta.dirname, '../dist-renderer-webpack/editor/penguinmod/extensions.js');
 
 const isAlreadyDownloaded = () => {
   try {
