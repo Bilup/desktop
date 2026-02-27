@@ -179,7 +179,7 @@ jobs:
         path: |
           D:\repo\dist\Bilup-Setup*x64.exe
     - name: Sign executables with SignPath
-      uses: signpath/github-action-submit-signing-request@4f13d373e8f0cd8d3c0465ff4877feff27aed2ae
+      uses: signpath/github-action-submit-signing-request@v1
       if: env.SIGNPATH_API_TOKEN != ''
       with:
         api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
