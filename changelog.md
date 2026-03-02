@@ -2,6 +2,10 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 1.1.0 (2026-03-02)
+- Sync to upstream (MistWarp) & every features' translations
+- Fix: PenguinMod extension gallery not showing up
+
 # 1.0.0 (2026-02-26)
 - Chinese translation
 - More extension galleries
