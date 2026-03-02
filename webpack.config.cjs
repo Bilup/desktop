@@ -108,31 +108,22 @@ module.exports = [
             filename: 'index.js'
         },
         entry: './src-renderer-webpack/editor/addons/index.jsx',
+        resolve: {
+            symlinks: false,
+            alias: {
+                react: path.resolve(__dirname, 'node_modules/react'),
+                'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+            }
+        },
         plugins: [
-            new DefinePlugin({
-                'process.env.ROOT': '""'
-            }),
             new CopyWebpackPlugin({
                 patterns: [
                     {
                         context: 'src-renderer-webpack/editor/addons/',
                         from: '*.html'
-                    },
-                    {
-                        from: 'node_modules/scratch-gui/src/lib/themes/blocks/high-contrast-media/blocks-media',
-                        to: 'static/blocks-media/high-contrast',
-                        force: true
                     }
                 ]
             })
-        ],
-        resolve: {
-            symlinks: false,
-            alias: {
-                react: path.resolve(__dirname, 'node_modules/react'),
-                'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-                'scratch-gui$': path.resolve(__dirname, 'node_modules/scratch-gui/src/index.js')
-            }
-        }
+        ]
     }
 ];
