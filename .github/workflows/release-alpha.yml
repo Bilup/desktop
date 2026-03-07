@@ -150,11 +150,6 @@ jobs:
     - name: Compile
       working-directory: D:\repo
       run: npm run webpack:prod
-    - name: Upload dist to GitHub Actions
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-dist
-        path: D:\repo\dist\
     - name: Package
       working-directory: D:\repo
       run: |
