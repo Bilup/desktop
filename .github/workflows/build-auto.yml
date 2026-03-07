@@ -22,7 +22,7 @@ jobs:
     - name: Fetch
       run: npm run fetch
     - name: Compile
-      run: npm run webpack:compile
+      run: npm run webpack:prod
     - name: Upload webpack artifacts to GitHub Actions
       uses: actions/upload-artifact@v4
       with:
