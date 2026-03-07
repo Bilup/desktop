@@ -159,7 +159,11 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: windows-dist
-        path: D:\repo\dist\
+        path: |
+            dist-extensions/
+            dist-library-files/
+            dist-renderer-webpack/
+            src-renderer/packager/
     - name: Package
       working-directory: D:\repo
       run: |
