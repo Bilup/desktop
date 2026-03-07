@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: npm install
     - name: Fetch
-      run: npm fetch
+      run: npm run fetch
     - name: Compile
       run: npm run webpack:compile
     - name: Upload webpack artifacts to GitHub Actions
