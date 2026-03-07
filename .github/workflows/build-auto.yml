@@ -19,9 +19,8 @@ jobs:
         node-version: 24
     - name: Install dependencies
       run: npm install
-    - name: Prepare extensions
-      # Don't need to do a full fetch, that would just cause a lot of unnecessary traffic
-      run: node scripts/prepare-extensions.mjs && node scripts/download-penguinmod.mjs
+    - name: Fetch
+      run: npm fetch
     - name: Compile
       run: npm run webpack:compile
     - name: Upload webpack artifacts to GitHub Actions
