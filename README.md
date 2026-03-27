@@ -12,7 +12,7 @@ Then run this to update and build the desktop application
 ```bash
 cd bilup-desktop
 git pull
-npm ci
+npm i
 npm run fetch
 npm run electron:package:dir
 cd dist
