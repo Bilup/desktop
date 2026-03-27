@@ -22,6 +22,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
+        cache: npm
     - name: Install dependencies
       run: npm install --loglevel=info
     - name: Fetch
@@ -54,6 +55,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
+        cache: npm
     - name: Install dependencies
       run: npm ci --loglevel=info
     - name: Fetch
@@ -134,6 +136,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
+        cache: npm
     # The repository being on D: means that node_modules IO will be fast, but npm still downloads
     # packages to a temporary folder for caching which is on C: by default. We need to make sure
     # npm uses the D: drive instead otherwise we still get bottlenecked by C:.
