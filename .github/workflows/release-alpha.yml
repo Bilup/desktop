@@ -23,10 +23,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-    - name: Force GitHub HTTPS
+    - name: Fix git + clean npm cache
       run: |
         git config --global url."https://github.com/".insteadOf "git@github.com:"
         git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+        git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        npm cache clean --force
     - name: Install dependencies
       run: npm install --loglevel=info
     - name: Fetch
@@ -60,10 +62,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-    - name: Force GitHub HTTPS
+    - name: Fix git + clean npm cache
       run: |
         git config --global url."https://github.com/".insteadOf "git@github.com:"
         git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+        git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        npm cache clean --force
     - name: Install dependencies
       run: npm i --loglevel=info
     - name: Fetch
@@ -145,10 +149,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-    - name: Force GitHub HTTPS
+    - name: Fix git + clean npm cache
       run: |
         git config --global url."https://github.com/".insteadOf "git@github.com:"
         git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+        git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        npm cache clean --force
     # The repository being on D: means that node_modules IO will be fast, but npm still downloads
     # packages to a temporary folder for caching which is on C: by default. We need to make sure
     # npm uses the D: drive instead otherwise we still get bottlenecked by C:.
