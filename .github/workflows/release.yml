@@ -18,6 +18,7 @@ jobs:
       with:
         submodules: recursive
         persist-credentials: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Install strip-nondeterminism
       run: sudo apt-get install strip-nondeterminism
     - name: Install Node.js

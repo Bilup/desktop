@@ -13,6 +13,7 @@ jobs:
       with:
         submodules: recursive
         persist-credentials: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
