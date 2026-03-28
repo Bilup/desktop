@@ -18,7 +18,9 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-        
+    - name: Use GitHub token for git
+      run: |
+        git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
     - name: Install dependencies
       run: npm install
     - name: Fetch
