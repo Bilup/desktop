@@ -18,12 +18,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-    - name: Fix git + clean npm cache
-      run: |
-        git config --global url."https://github.com/".insteadOf "git@github.com:"
-        git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-        git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        npm cache clean --force
+
     - name: Install dependencies
       run: npm install
     - name: Fetch
