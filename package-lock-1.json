@@ -1656,7 +1656,7 @@
     },
     "node_modules/@bilup/scratch-l10n": {
       "version": "3.1001.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-l10n.git#583bc9e03cb6457ce29b03c4b0c5c2af684381b8",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-l10n.git#develop-builds",
       "dev": true,
       "license": "BSD-3-Clause",
       "dependencies": {
@@ -13931,7 +13931,7 @@
     },
     "node_modules/scratch-audio": {
       "version": "0.1.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-audio.git#6b71026b568d63998b647409ffe360cc6d772c32",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-audio.git#develop-builds",
       "dev": true,
       "license": "BSD-3-Clause",
       "dependencies": {
@@ -13941,7 +13941,7 @@
     },
     "node_modules/scratch-blocks": {
       "version": "0.1.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-blocks.git#1ecf8da53c22f2c1e9564cc22a271542bcf575fa",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-blocks.git#develop-builds",
       "dev": true,
       "license": "GPL-3.0",
       "dependencies": {
@@ -13951,7 +13951,7 @@
     },
     "node_modules/scratch-gui": {
       "version": "1.2.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-gui.git#481dd0a647117cf1ba0c0868d8dfa968cd5d5ff9",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-gui.git#develop",
       "dev": true,
       "license": "GPL-3.0",
       "dependencies": {
@@ -14032,7 +14032,7 @@
     },
     "node_modules/scratch-gui/node_modules/@bilup/scratch-svg-renderer": {
       "version": "1.0.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-svg-renderer.git#98c898e0d2543afdd11459033c3d2680294f186f",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-svg-renderer.git#develop-builds",
       "dev": true,
       "license": "MPL-2.0",
       "dependencies": {
@@ -14208,7 +14208,7 @@
     },
     "node_modules/scratch-gui/node_modules/scratch-paint": {
       "version": "0.2.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-paint.git#c3739350701ab56563f8585c244dd6646e771cd7",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-paint.git#develop",
       "dev": true,
       "license": "GPL-3.0",
       "dependencies": {
@@ -14257,7 +14257,7 @@
     },
     "node_modules/scratch-gui/node_modules/scratch-render": {
       "version": "0.1.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-render.git#a2f262093a8d8dc83409942f2068b3e762634a77",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-render.git#develop-builds",
       "dev": true,
       "license": "MPL-2.0",
       "dependencies": {
@@ -14275,7 +14275,7 @@
     },
     "node_modules/scratch-gui/node_modules/scratch-vm": {
       "version": "2.1.46",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-vm.git#10a2272066ea8f0a32f051ca8bfb9262d7648d79",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-vm.git#develop-builds",
       "dev": true,
       "license": "MPL-2.0",
       "dependencies": {
@@ -14347,7 +14347,7 @@
     },
     "node_modules/scratch-parser": {
       "version": "0.0.0-development",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-parser.git#902dc8880fa5eddce2da4ed7f6b34802ed67fc45",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-parser.git#main",
       "dev": true,
       "license": "MPL-2.0",
       "dependencies": {
@@ -14391,7 +14391,7 @@
     },
     "node_modules/scratch-render-fonts": {
       "version": "1.0.0",
-      "resolved": "git+ssh://git@github.com/Bilup/scratch-render-fonts.git#d09642667e6b3ca7cf9420cd92350ce177694ad5",
+      "resolved": "git+ssh://git@github.com/Bilup/scratch-render-fonts.git#main",
       "dev": true,
       "dependencies": {
         "base64-loader": "1.0.0"
