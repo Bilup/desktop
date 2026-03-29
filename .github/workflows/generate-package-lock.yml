@@ -16,7 +16,7 @@ jobs:
       with:
         node-version: 24
     - name: Generate package-lock.json
-      run: npm install
+      run: npm install --package-lock-only
     - name: Upload package-lock.json to artifacts
       uses: actions/upload-artifact@v4
       with:
