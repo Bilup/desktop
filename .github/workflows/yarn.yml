@@ -23,7 +23,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-        cache: yarn
     - name: Install Yarn
       run: npm install -g yarn
     - name: Install dependencies
@@ -64,7 +63,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-        cache: yarn
     - name: Install Yarn
       run: npm install -g yarn
     - name: Install dependencies
@@ -153,16 +151,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24
-        cache: yarn
     - name: Install Yarn
       run: npm install -g yarn
 
-    # The repository being on D: means that node_modules IO will be fast, but npm still downloads
-    # packages to a temporary folder for caching which is on C: by default. We need to make sure
-    # npm uses the D: drive instead otherwise we still get bottlenecked by C:.
-    - name: "Configure yarn to use D: drive"
-      run: |
-        yarn config set cache-folder D:\yarn-cache
+
     - name: Install dependencies
       working-directory: D:\repo
       run: yarn install --ignore-scripts
