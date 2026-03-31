@@ -26,7 +26,7 @@ jobs:
     - name: Install Yarn
       run: npm install -g yarn
     - name: Install dependencies
-      run: yarn install --ignore-scripts
+      run: yarn install --ignore-scripts --ignore-engines
     - name: Fetch
       run: yarn run fetch
     - name: Compile
@@ -66,7 +66,7 @@ jobs:
     - name: Install Yarn
       run: npm install -g yarn
     - name: Install dependencies
-      run: yarn install --ignore-scripts
+      run: yarn install --ignore-scripts --ignore-engines
     - name: Fetch
       run: yarn run fetch
     - name: Compile
@@ -157,7 +157,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: D:\repo
-      run: yarn install --ignore-scripts
+      run: yarn install --ignore-scripts --ignore-engines
     - name: Fetch
       working-directory: D:\repo
       run: yarn run fetch
