@@ -4,72 +4,205 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-      body {
+      * {
         margin: 0;
         padding: 0;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        color: black;
-        background-color: white;
-      }
-      main {
-        padding: 20px;
         box-sizing: border-box;
-        width: 100vw;
-        height: 100vh;
-        border: 20px solid #75C1C4;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
       }
-
-      h1, h2, p {
-        margin: 0;
-      }
-      ul {
-        margin: 0.5rem 0;
-      }
-
-      .update-log {
-        width: 100%;
-        flex-grow: 1;
-        border: 0;
-        overflow: auto;
-      }
-      .loading, .error, .empty {
-        width: 100%;
-        height: 100%;
+      body {
+        background: #333;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 32px 32px;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "Noto Sans", Helvetica, Arial, sans-serif;
+        color: #fff;
+        line-height: 1.5;
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 2rem;
+      }
+      main {
+        max-width: 860px;
+        width: 100%;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      @media (max-width: 720px) {
+        body {
+          padding: 1rem;
+        }
+      }
+      h1 {
+        font-size: 2.2rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-top: 0;
+        margin-bottom: 0.25rem;
+        color: #75C1C4;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 1.8rem 0 0.75rem 0;
+        color: #fff;
+        letter-spacing: -0.2px;
+        border-bottom: 1px solid rgba(117, 193, 196, 0.3);
+        padding-bottom: 0.4rem;
+      }
+      p {
+        margin: 1rem 0;
+        font-weight: 450;
+        color: #fff;
+        line-height: 1.6;
+      }
+      i {
+        color: #fff;
+        font-style: italic;
+      }
+      a {
+        color: #75C1C4;
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px solid #75C1C4;
+        transition: all 0.2s;
+      }
+      a:hover {
+        color: #3C7699;
+        border-bottom-color: #3C7699;
+        text-decoration: none;
+      }
+      strong, b {
+        color: #fff;
+        font-weight: 600;
       }
       button {
         cursor: pointer;
         font: inherit;
-        color: inherit;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        border: 1px solid hsla(0, 0%, 0%, 0.15);
-        font-weight: bold;
+        font-weight: 600;
+        padding: 0.7rem 1.2rem;
+        border-radius: 2rem;
+        border: none;
+        transition: all 0.2s ease;
+        background: #2a2f36;
+        color: #fff;
+        margin-top: 0.25rem;
       }
       .download-button {
-        color: black;
-        background-color: #24cd11;
+        background: #75C1C4;
+        color: #0f1217;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      }
+      .download-button:hover {
+        background: #5fa7aa;
+        transform: translateY(-1px);
+      }
+      .ignore-button:hover {
+        background: #3e454f;
+        transform: translateY(-1px);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .download-button, .ignore-button {
+        width: calc(50% - 0.5rem);
+        display: inline-block;
+      }
+      .download-button {
+        margin-right: 0.5rem;
       }
       .ignore-button {
-
+        margin-left: 0.5rem;
+      }
+      .button-group {
+        display: flex;
+        gap: 1rem;
+        margin: 0.5rem 0;
+      }
+      .button-group button {
+        flex: 1;
+        width: auto;
       }
       label {
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0.5rem 0;
+        font-size: 0.95rem;
+        color: #fff;
       }
-
+      input[type="checkbox"] {
+        width: 1.1rem;
+        height: 1.1rem;
+        accent-color: #75C1C4;
+        cursor: pointer;
+      }
+      .update-log ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+        list-style-type: disc;
+      }
+      .update-log li {
+        margin: 0.4rem 0;
+        color: #e2e8f0;
+      }
+      .update-log h2 {
+        margin: 1rem 0 0.5rem 0;
+        border-bottom: none;
+        font-size: 1.3rem;
+      }
+      .loading, .error, .empty {
+        width: 100%;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: 500;
+        color: #aaa;
+      }
+      .error {
+        color: #f87171;
+      }
+      .empty {
+        color: #75C1C4;
+      }
       .if-security {
         display: none;
       }
       .security .if-security {
-        display: initial;
+        display: block;
       }
       .security .if-normal {
         display: none;
+      }
+      .security h1 {
+        color: #facc15;
+      }
+      .security .download-button {
+        background: #f97316;
+        color: #fff;
+      }
+      .security .download-button:hover {
+        background: #ea580c;
+      }
+      .update-log::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .update-log::-webkit-scrollbar-track {
+        background: #1e2a36;
+        border-radius: 8px;
+      }
+      .update-log::-webkit-scrollbar-thumb {
+        background: #75C1C4;
+        border-radius: 8px;
       }
     </style>
   </head>
@@ -107,8 +240,10 @@
         document.querySelector('.loading').textContent = strings['update.loading'];
       </script>
 
-      <button class="download-button"></button>
-      <button class="ignore-button"></button>
+      <div class="button-group">
+        <button class="download-button"></button>
+        <button class="ignore-button"></button>
+      </div>
       <script>
         const downloadButton = document.querySelector('.download-button');
         const ignoreButton = document.querySelector('.ignore-button');

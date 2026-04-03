@@ -1,44 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #333;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "Noto Sans", Helvetica, Arial, sans-serif;
+      color: #fff;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    @media (max-width: 720px) {
       body {
-        margin: 0;
-        padding: 0;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        color: black;
-        background-color: white;
+        padding: 1rem;
       }
-      main {
-        padding: 20px;
-        box-sizing: border-box;
-        width: 100%;
-        min-height: 100vh;
-        border: 20px solid #75C1C4;
+
+      .card {
+        margin: 16px;
+        padding: 20px 20px;
+        border-radius: 28px;
       }
-      pre {
-        font-size: inherit;
-        overflow-x: hidden;
+    }
+
+    @media (max-width: 560px) {
+      .card {
+        margin: 12px;
+        padding: 16px;
+        border-radius: 24px;
       }
-      h1 {
-        margin-top: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>Bilup Desktop <span class="version"></span></h1>
-      <p class="more-version"></p>
-      <script>
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-top: 0;
+      margin-bottom: 0.25rem;
+      color: #75C1C4;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .version {
+      font-size: 1rem;
+      font-weight: 500;
+      background: #75C1C4;
+      color: #fff;
+      padding: 0.2rem 0.7rem;
+      border-radius: 40px;
+      letter-spacing: normal;
+      font-family: monospace;
+    }
+
+    .more-version {
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background:#555;
+      display: inline-block;
+      padding: 0.2rem 0.8rem;
+      margin: 0.5rem 0 1rem 0;
+      border-radius: 32px;
+    }
+
+    p {
+      margin: 1.2rem 0;
+      font-weight: 450;
+    }
+
+    a {
+      color: #75C1C4;
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid #75C1C4;
+      transition: all 0.2s;
+    }
+
+    a:hover {
+      color: #3C7699;
+      border-bottom-color: #3C7699;
+      text-decoration: none;
+    }
+
+    pre {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      background: rgba(0, 0, 0, 0.08);
+      padding: 1.2rem 1.5rem;
+      border-radius: 24px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 1.5rem;
+      border: 1px solid #75C1C4;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Bilup Desktop <span class="version"></span></h1>
+    <p class="more-version"></p>
+    <script>
         var info = AboutPreload.getInfo();
         document.querySelector('.version').textContent = info.version;
         document.querySelector('.more-version').textContent = `(Debug info: Electron ${info.electron}, Platform ${info.platform} ${info.arch}, Distribution ${info.dist})`;
       </script>
-      <p>Bilup is a better offline editor for Scratch 3. Learn more at <a href="https://www.bilup.org/">https://www.bilup.org/</a>.</p>
-      <p>Bilup Desktop is licensed under the GNU General Public License v3.0. The source code is published <a href="https://github.com/Bilup/" target="_blank" rel="noreferrer">on GitHub</a>. You can read the license below:</p>
-      <pre>
+    <p>Bilup is a better offline editor for Scratch 3. Learn more at <a
+        href="https://www.bilup.org/">https://www.bilup.org/</a>.</p>
+    <p>Bilup Desktop is licensed under the GNU General Public License v3.0. The source code is published <a
+        href="https://github.com/Bilup/" target="_blank" rel="noreferrer">on GitHub</a>. You can read the license
+      below:</p>
+    <pre>
                     GNU GENERAL PUBLIC LICENSE
                         Version 3, 29 June 2007
 
@@ -713,6 +805,7 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 &lt;https://www.gnu.org/licenses/why-not-lgpl.html&gt;.</pre>
-    </main>
-  </body>
+  </main>
+</body>
+
 </html>
