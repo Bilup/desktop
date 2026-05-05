@@ -20,3 +20,6 @@ development.provisionprofile
 
 # Apple App Store Connect API key
 *.p8
+
+#Prevent anyone upload GitHub Actions Files here
+download/

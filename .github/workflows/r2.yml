@@ -1,0 +1,49 @@
+name: Sync Release to R2
+on:
+  workflow_dispatch:
+jobs:
+  sync-r2:
+    runs-on: ubuntu-latest
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      BUCKET: bilup-download
+    steps:
+    - name: Checkout (for scripts)
+      uses: actions/checkout@v4
+    - name: Install tools
+      run: |
+        pip install awscli
+        sudo apt-get update
+        sudo apt-get install -y jq
+    - name: Configure AWS CLI
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.R2_ACCESS_KEY }}
+        aws configure set aws_secret_access_key ${{ secrets.R2_SECRET_KEY }}
+        aws configure set default.region auto
+    - name: Make r2 script executable
+      run: chmod +x scripts/r2.sh
+    - name: Get latest release tag
+      id: latest
+      run: |
+        TAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Latest tag: $TAG"
+    - name: Download release assets
+      run: |
+        mkdir download
+        gh release download ${{ steps.latest.outputs.tag }} \
+          --dir download \
+          --repo ${{ github.repository }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Show downloaded files
+      run: ls -R download
+    - name: Upload to versioned path
+      run: |
+        ./scripts/r2.sh s3 cp download/ s3://$BUCKET/releases/${{ steps.latest.outputs.tag }}/ \
+          --recursive
+    - name: Update latest
+      run: |
+        ./scripts/r2.sh s3 rm s3://$BUCKET/ --recursive || true
+        ./scripts/r2.sh s3 cp download/ s3://$BUCKET/ \
+          --recursive
