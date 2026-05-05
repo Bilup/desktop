@@ -38,10 +38,6 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Show downloaded files
       run: ls -R download
-    - name: Upload to versioned path
-      run: |
-        ./scripts/r2.sh s3 cp download/ s3://$BUCKET/releases/${{ steps.latest.outputs.tag }}/ \
-          --recursive
     - name: Update latest
       run: |
         ./scripts/r2.sh s3 rm s3://$BUCKET/ --recursive || true
