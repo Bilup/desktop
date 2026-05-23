@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.0",
+    "date": "2026-5-23",
+    "notes": [
+      "Fix some known issues",
+      "Bilup Nova is now available! Now use AI Agents to help you create projects!",
+      "Add support for `api.yearnstudio.cn`"
+    ]
+  },
+  {
     "version": "1.4.0",
     "date": "2026-4-26",
     "notes": [
@@ -13,7 +22,7 @@
     "version": "1.3.0",
     "date": "2026-4-13",
     "notes": [
-      "Fix some known issue"
+      "Fix some known issues"
     ]
   },
   {
