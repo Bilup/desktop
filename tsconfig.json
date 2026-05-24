@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "noEmit": false
+  },
+  "include": [
+    "src/**/*",
+    "src-renderer-webpack/**/*",
+    "node_modules/scratch-gui/src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

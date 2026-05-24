@@ -21,7 +21,8 @@ const base = {
                     {
                         loader: 'ts-loader',
                         options: {
-                            transpileOnly: true
+                            transpileOnly: true,
+                            configFile: 'tsconfig.json'
                         }
                     }
                 ],
