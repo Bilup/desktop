@@ -9,7 +9,7 @@ jobs:
 
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-      BUCKET: bilup-assets
+      BUCKET: assets
 
     steps:
       - name: Checkout
