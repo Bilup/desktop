@@ -1,0 +1,50 @@
+name: Sync Library Files to R2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-library-files:
+    runs-on: ubuntu-latest
+
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      BUCKET: bilup-assets
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run download script
+        run: node scripts/download-library-files.mjs
+
+      - name: Show generated files
+        run: ls -R dist-library-files
+
+      - name: Install AWS CLI
+        run: |
+          pip install awscli
+
+      - name: Configure AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.R2_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.R2_SECRET_KEY }}
+          aws configure set default.region auto
+
+      - name: Make r2 script executable
+        run: chmod +x scripts/r2.sh
+
+      - name: Upload to R2
+        run: |
+          ./scripts/r2.sh s3 rm s3://$BUCKET/ --recursive || true
+
+          ./scripts/r2.sh s3 cp dist-library-files/ s3://$BUCKET/ \
+            --recursive
