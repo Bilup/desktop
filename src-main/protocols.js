@@ -250,8 +250,8 @@ const createModernProtocolHandler = (metadata) => {
       if (metadata.brotli) {
         // Reading it all into memory is not ideal, but we've had so many problems with streaming
         // files from the asar that I can settle with this.
-        const fsPromises = require('fs/promises');
-        const brotliData = await fsPromises.readFile(`${resolved}.br`);
+        const brotliResponse = await net.fetch(nodeURL.pathToFileURL(`${resolved}.br`));
+        const brotliData = await brotliResponse.arrayBuffer();
         const decompressed = await brotliDecompress(brotliData);
         return new Response(decompressed, {
           headers
