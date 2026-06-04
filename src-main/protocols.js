@@ -183,7 +183,12 @@ const errorPageHeaders = {
 const getBaseProtocolHeaders = metadata => {
   const result = {
     // Make sure Chromium always trusts our content-type and doesn't try anything clever
-    'x-content-type-options': 'nosniff'
+    'x-content-type-options': 'nosniff',
+    // CORS support
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+    'access-control-allow-headers': 'Content-Type, Authorization, X-Requested-With',
+    'access-control-max-age': '86400'
   };
 
   // Optional Content-Security-Policy
