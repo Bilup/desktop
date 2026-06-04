@@ -249,6 +249,12 @@ class AbstractWindow {
         webContents.toggleDevTools();
       }
 
+      // F12 to open dev tools
+      if (input.key === 'F12') {
+        event.preventDefault();
+        webContents.toggleDevTools();
+      }
+
       // Ctrl+N to open new window
       if (input.control && input.key.toLowerCase() === 'n') {
         event.preventDefault();
