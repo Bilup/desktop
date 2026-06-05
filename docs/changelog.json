@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.1",
+    "date": "2026-6-5",
+    "notes": [
+      "Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)",
+      "Update one icon"
+    ]
+  },
+  {
     "version": "1.5.0",
     "date": "2026-5-23",
     "notes": [

@@ -2,6 +2,10 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 1.5.1 (2026-06-05)
+- Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)
+- Update one icon
+
 # 1.5.0 (2026-05-23)
 - Fix some known issues
 - Bilup Nova is now available! Now use AI Agents to help you create projects!

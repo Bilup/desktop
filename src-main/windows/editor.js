@@ -574,7 +574,6 @@ class EditorWindow extends ProjectRunningWindow {
     });
 
     this.loadURL('tw-editor://./gui/gui.html');
-    this.window.webContents.openDevTools();
     this.show();
   }
 
