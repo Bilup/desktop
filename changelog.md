@@ -4,7 +4,6 @@ Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **form
 
 # 1.5.1 (2026-06-05)
 - Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)
-- Update one icon
 
 # 1.5.0 (2026-05-23)
 - Fix some known issues
