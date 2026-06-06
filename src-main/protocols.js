@@ -72,6 +72,36 @@ const FILE_SCHEMES = {
     defaultExtension: '.html',
     csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
   },
+  'ae-extensions': {
+    root: path.resolve(__dirname, '../dist-astra-extensions'),
+    supportFetch: true,
+    brotli: true,
+    embeddable: true,
+    stream: true,
+    directoryIndex: 'index.html',
+    defaultExtension: '.html',
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+  },
+  'mw-extensions': {
+    root: path.resolve(__dirname, '../dist-mw-extensions'),
+    supportFetch: true,
+    brotli: true,
+    embeddable: true,
+    stream: true,
+    directoryIndex: 'index.html',
+    defaultExtension: '.html',
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+  },
+  'sp-extensions': {
+    root: path.resolve(__dirname, '../dist-sp-extensions'),
+    supportFetch: true,
+    brotli: true,
+    embeddable: true,
+    stream: true,
+    directoryIndex: 'index.html',
+    defaultExtension: '.html',
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+  },
   'tw-update': {
     root: path.resolve(__dirname, '../src-renderer/update'),
     csp: "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://desktop.bilup.org"
