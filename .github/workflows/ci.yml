@@ -1,0 +1,187 @@
+name: Release
+on:
+  push:
+permissions:
+  contents: write
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Install dependencies
+        run: yarn install --ignore-engines --ignore-scripts
+      - name: Fetch
+        run: yarn run fetch
+      - name: Compile
+        run: yarn run webpack:prod
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist-extensions/
+            dist-library-files/
+            dist-renderer-webpack/
+            src-renderer/packager/
+            dist-bilup-extensions/
+  package-linux:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        format: [debian, tarball, appimage, pacman, rpm]
+        arch: [x64, armv7l, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y strip-nondeterminism fakeroot ruby ruby-dev rubygems libarchive-tools rpm
+          sudo gem install --no-document fpm
+      - name: Install dependencies
+        run: yarn install --ignore-engines --ignore-scripts
+      - name: Package
+        run: |
+          node release-automation/build.mjs \
+            --${{ matrix.format }} \
+            --${{ matrix.arch }} \
+            --production
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.format }}-${{ matrix.arch }}
+          path: dist/*
+  package-mac:
+    needs: build
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: modern
+            args: '--mac --universal'
+          - target: legacy-10.13-10.14
+            args: '--mac-legacy-10.13-10.14 --x64'
+          - target: legacy-10.15
+            args: '--mac-legacy-10.15 --x64'
+          - target: legacy-11
+            args: '--mac-legacy-11 --universal'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Install dependencies
+        run: yarn install --ignore-engines --ignore-scripts
+      - name: Package
+        run: node release-automation/build.mjs ${{ matrix.args }} --production
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.target }}
+          path: dist/*.dmg
+  package-windows:
+    needs: build
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - target: modern-nsis-x64
+            args: '--windows --x64'
+            files: '*.exe'
+          - target: modern-nsis-ia32
+            args: '--windows --ia32'
+            files: '*.exe'
+          - target: modern-nsis-arm64
+            args: '--windows --arm64'
+            files: '*.exe'
+          - target: modern-appx-x64
+            args: '--microsoft-store --x64'
+            files: '*.appx'
+          - target: modern-appx-ia32
+            args: '--microsoft-store --ia32'
+            files: '*.appx'
+          - target: modern-appx-arm64
+            args: '--microsoft-store --arm64'
+            files: '*.appx'
+          - target: portable
+            args: '--windows-portable --x64'
+            files: '*.exe'
+          - target: legacy-x64
+            args: '--windows-legacy --x64'
+            files: '*.exe'
+          - target: legacy-ia32
+            args: '--windows-legacy --ia32'
+            files: '*.exe'
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+          path: repo
+      - name: Move to D drive
+        shell: pwsh
+        run: |
+          Copy-Item -Path repo -Destination D:\repo -Recurse
+          Remove-Item -Path repo -Recurse -Force
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: D:\repo\
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Configure yarn cache
+        shell: pwsh
+        run: |
+          yarn config set cache-folder D:\yarn-cache
+      - name: Install dependencies
+        working-directory: D:\repo
+        run: |
+          yarn install --ignore-engines --ignore-scripts
+      - name: Package
+        working-directory: D:\repo
+        run: |
+          node release-automation/build.mjs ${{ matrix.args }} --production
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.target }}
+          path: D:\repo\dist\${{ matrix.files }}
+          retention-days: 1
