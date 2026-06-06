@@ -5,7 +5,7 @@ import * as builder from 'electron-builder';
 import * as electronFuses from '@electron/fuses';
 import './patch-electron-builder.cjs';
 
-const {Platform, Arch} = builder;
+const { Platform, Arch } = builder;
 
 const isProduction = process.argv.includes('--production');
 
@@ -229,6 +229,8 @@ const build = async ({
   }
 };
 
+// Windows
+
 const buildWindows = () => build({
   platformName: 'WINDOWS',
   platformType: 'nsis',
@@ -265,6 +267,8 @@ const buildMicrosoftStore = () => build({
   platformType: 'appx',
   manageUpdates: false
 });
+
+// Mac OS
 
 const buildMac = () => build({
   platformName: 'MAC',
@@ -317,6 +321,8 @@ const buildMacDir = () => build({
   manageUpdates: true
 });
 
+// Linux
+
 const buildDebian = () => build({
   platformName: 'LINUX',
   platformType: 'deb',
@@ -364,13 +370,61 @@ const buildLinuxDir = () => build({
   manageUpdates: true
 });
 
+const buildPacman = () => build({
+  platformName: 'LINUX',
+  platformType: 'pacman',
+  manageUpdates: true,
+  extraConfig: {
+    artifactBuildCompleted: async (artifact) => {
+      if (artifact.file.endsWith('.pacman')) {
+        const newPath = artifact.file.replace(/\.pacman$/, '.pkg.tar.zst');
+        fs.renameSync(artifact.file, newPath);
+        console.log(`[pacman] Renamed: ${pathUtil.basename(artifact.file)} -> ${pathUtil.basename(newPath)}`);
+      }
+    }
+  }
+});
+
+const buildRpm = () => build({
+  platformName: 'LINUX',
+  platformType: 'rpm',
+  manageUpdates: true
+});
+
+const buildFlatpak = () => build({
+  platformName: 'LINUX',
+  platformType: 'flatpak',
+  manageUpdates: true,
+  extraConfig: {
+    directories: {
+      output: "dist-linux"
+    },
+    flatpak: {
+      runtime: 'org.freedesktop.Platform',
+      runtimeVersion: '24.08',
+      sdk: 'org.freedesktop.Sdk',
+      base: 'org.electronjs.Electron2.BaseApp',
+      baseVersion: '24.08',
+      finishArgs: [
+        '--share=ipc',
+        '--socket=x11',
+        '--socket=wayland',
+        '--socket=pulseaudio',
+        '--share=network',
+        '--device=dri',
+        '--filesystem=home'
+      ]
+    }
+  }
+});
+
 const run = async () => {
   const options = {
     '--windows': buildWindows,
-    '--windows-legacy': buildWindowsLegacy,
     '--windows-portable': buildWindowsPortable,
     '--windows-dir': buildWindowsDir,
     '--microsoft-store': buildMicrosoftStore,
+    '--windows-legacy': buildWindowsLegacy,
     '--mac': buildMac,
     '--mac-legacy-10.13-10.14': buildMacLegacy10131014,
     '--mac-legacy-10.15': buildMacLegacy1015,
@@ -379,7 +433,10 @@ const run = async () => {
     '--debian': buildDebian,
     '--tarball': buildTarball,
     '--appimage': buildAppImage,
-    '--linux-dir': buildLinuxDir
+    '--linux-dir': buildLinuxDir,
+    '--pacman': buildPacman,
+    '--rpm': buildRpm,
+    '--flatpak': buildFlatpak
   };
 
   let built = 0;
