@@ -96,6 +96,17 @@ class ProjectRunningWindow extends AbtractWindow {
       });
     }
 
+    if (parsed.origin === 'https://editors.astras.top') {
+      // Astra 使用 /extensions/ 前缀，需要去掉
+      let pathname = parsed.pathname;
+      if (pathname.startsWith('/extensions')) {
+        pathname = pathname.slice('/extensions'.length);
+      }
+      return callback({
+        redirectURL: `ae-extensions://.${pathname}`
+      });
+    }
+
     if (parsed.origin === 'https://extensions.mistium.com') {
       return callback({
         redirectURL: `mw-extensions://.${parsed.pathname}`

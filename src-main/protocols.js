@@ -263,7 +263,9 @@ const createModernProtocolHandler = (metadata) => {
         parsedURL = new URL(metadata.directoryIndex, parsedURL);
       }
 
-      let resolved = path.join(root, parsedURL.pathname);
+      // 解码 URL 编码的路径（如空格 %20）
+      const decodedPathname = decodeURIComponent(parsedURL.pathname);
+      let resolved = path.join(root, decodedPathname);
       if (!resolved.startsWith(root)) {
         return createErrorResponse(new Error('Path traversal blocked'));
       }
@@ -335,7 +337,9 @@ const createLegacyBrotliProtocolHandler = (metadata) => {
         parsedURL = new URL(metadata.directoryIndex, parsedURL);
       }
 
-      let resolved = path.join(root, parsedURL.pathname);
+      // 解码 URL 编码的路径（如空格 %20）
+      const decodedPathname = decodeURIComponent(parsedURL.pathname);
+      let resolved = path.join(root, decodedPathname);
       if (!resolved.startsWith(root)) {
         returnErrorPage(new Error('Path traversal blocked'));
         return;
@@ -401,7 +405,9 @@ const createLegacyFileProtocolHandler = (metadata) => {
         parsedURL = new URL(metadata.directoryIndex, parsedURL);
       }
 
-      let resolved = path.join(root, parsedURL.pathname);
+      // 解码 URL 编码的路径（如空格 %20）
+      const decodedPathname = decodeURIComponent(parsedURL.pathname);
+      let resolved = path.join(root, decodedPathname);
       if (!resolved.startsWith(root)) {
         returnErrorResponse(new Error('Path traversal blocked'), 'path-traversal');
         return;
