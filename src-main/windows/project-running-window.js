@@ -96,12 +96,6 @@ class ProjectRunningWindow extends AbtractWindow {
       });
     }
 
-    if (parsed.origin === 'https://editors.astras.top/extensions') {
-      return callback({
-        redirectURL: `ae-extensions://.${parsed.pathname}`
-      });
-    }
-
     if (parsed.origin === 'https://extensions.mistium.com') {
       return callback({
         redirectURL: `mw-extensions://.${parsed.pathname}`
