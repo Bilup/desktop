@@ -34,6 +34,9 @@ jobs:
             dist-renderer-webpack/
             src-renderer/packager/
             dist-bilup-extensions/
+            dist-astra-extensions/
+            dist-mw-extensions/
+            dist-sp-extensions/
   package-linux:
     needs: build
     runs-on: ubuntu-latest
