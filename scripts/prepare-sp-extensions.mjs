@@ -54,11 +54,12 @@ const createFetchLogPrefix = (libraryName, type, index = null, total = null) => 
   return `[${libraryName} ${type} ${index}/${total}]`;
 };
 
-const writeRaw = async (root, relativePath, data) => {
-  const normalized = normalizeRelativePath(relativePath);
-  const outputPath = pathUtil.join(root, normalized);
+const writeCompressed = async (root, relativePath, data) => {
+  const normalizedRelativePath = normalizeRelativePath(relativePath);
+  const outputPath = pathUtil.join(root, `${normalizedRelativePath}.br`);
   await fsPromises.mkdir(pathUtil.dirname(outputPath), {recursive: true});
-  await fsPromises.writeFile(outputPath, data);
+  const compressed = await brotliCompress(data);
+  await fsPromises.writeFile(outputPath, compressed);
 };
 
 const buildSPOfflineFiles = async () => {
@@ -74,7 +75,7 @@ const buildSPOfflineFiles = async () => {
   const metadataPath = 'Gallery Files/Extension-Keys.json';
   console.log(`${createFetchLogPrefix('SharkPools', 'required', 1, 1)} Fetching ${metadataPath}`);
   const metadataBuffer = await fetchSPFile(metadataPath, true);
-  await writeRaw(outputDirectory, metadataPath, metadataBuffer);
+  await writeCompressed(outputDirectory, metadataPath, metadataBuffer);
   console.log('[SharkPools] Saved original metadata');
 
   // 解析 metadata 获取需要下载的文件列表
@@ -113,7 +114,7 @@ const buildSPOfflineFiles = async () => {
     );
     try {
       const data = await fetchSPFile(file, true);
-      await writeRaw(outputDirectory, file, data);
+      await writeCompressed(outputDirectory, file, data);
       requiredCount++;
     } catch (error) {
       console.warn(`${createFetchLogPrefix('SharkPools', 'required', requiredIndex, requiredTotal)} Failed to fetch ${file}:`, error.message);
@@ -131,7 +132,7 @@ const buildSPOfflineFiles = async () => {
       console.log(`${createFetchLogPrefix('SharkPools', 'optional', optionalIndex)} Missing ${file}`);
       continue;
     }
-    await writeRaw(outputDirectory, file, data);
+    await writeCompressed(outputDirectory, file, data);
     optionalCount++;
   }
 

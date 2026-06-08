@@ -264,7 +264,7 @@ const buildAstraOfflineFiles = async () => {
     }
   }
 
-  await writeRaw(astraOutputDirectory, metadataPath, metadataBuffer);
+  await writeCompressed(astraOutputDirectory, metadataPath, metadataBuffer);
 
   let requiredCount = 1;
   let optionalCount = 0;
@@ -280,7 +280,7 @@ const buildAstraOfflineFiles = async () => {
     );
     try {
       const data = await fetchAstraFile(file, true);
-      await writeRaw(astraOutputDirectory, file, data);
+      await writeCompressed(astraOutputDirectory, file, data);
       requiredCount++;
     } catch (error) {
       console.warn(`${createFetchLogPrefix('Astra', 'required', requiredIndex, requiredTotal)} Failed to fetch ${file}:`, error.message);
@@ -296,7 +296,7 @@ const buildAstraOfflineFiles = async () => {
       console.log(`${createFetchLogPrefix('Astra', 'optional', optionalIndex)} Missing ${file}`);
       continue;
     }
-    await writeRaw(astraOutputDirectory, file, data);
+    await writeCompressed(astraOutputDirectory, file, data);
     optionalCount++;
   }
 
