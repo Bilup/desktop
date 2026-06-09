@@ -26,7 +26,7 @@ jobs:
         url='https://github.com/Bilup/'
         license=('GPL3')
         depends=('alsa-lib' 'gtk3' 'nss' 'libxss' 'xdg-utils' 'hicolor-icon-theme')
-        source_x86_64=("bilup-\${pkgver}-x86_64.deb::${url}/Desktop/}releases/download/${TAG}/Bilup-linux-amd64-\${pkgver}.deb")
+        source_x86_64=("bilup-\${pkgver}-x86_64.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-amd64-\${pkgver}.deb")
         source_armv7h=("bilup-\${pkgver}-armv7h.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-armv7l-\${pkgver}.deb")
         source_aarch64=("bilup-\${pkgver}-aarch64.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-arm64-\${pkgver}.deb")
         sha256sums_x86_64=('SKIP')
