@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.5.2",
+    "date": "2026-6-9",
+    "notes": [
+      "Desktop: Fix extension libraries not working in local"
+    ]
+  },
+  {
     "version": "1.5.1",
     "date": "2026-6-5",
     "notes": [

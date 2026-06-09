@@ -705,7 +705,7 @@
   <script type="generated-locale-names">{"en":"English","zh-cn":"简体中文"}</script>
 
   <script>
-    const VERSION = '1.5.1';
+    const VERSION = '1.5.2';
 
     // OS-specific styles
     const getOS = () => {
@@ -1090,6 +1090,12 @@
     <h2 l10n="changelog">Changelog</h2>
     <div lang="en">
       <!-- CHANGELOG_START -->
+        <div data-version="1.5.2">
+          <h3>v1.5.2 (June 9 2026)</h3>
+          <ul>
+            <li>Desktop: Fix extension libraries not working in local</li>
+          </ul>
+        </div>
         <div data-version="1.5.1">
           <h3>v1.5.1 (June 5 2026)</h3>
           <ul>
@@ -1279,7 +1285,7 @@
     <h3>AppImage</h3>
     <ul class="download-list">
       <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
-          data-asset="Bilup-linux-x86_64-{version}.AppImage" data-r2="">x86 64-bit</a></li>
+          data-asset="Bilup-linux-x64-{version}.AppImage" data-r2="">x86 64-bit</a></li>
       <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
           data-asset="Bilup-linux-arm64-{version}.AppImage" data-r2="">ARM 64-bit</a></li>
       <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
@@ -1294,6 +1300,26 @@
           data-asset="Bilup-linux-arm64-{version}.tar.gz" data-r2="">ARM 64-bit</a></li>
       <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
           data-asset="Bilup-linux-armv7l-{version}.tar.gz" data-r2="">ARMv7l</a></li>
+    </ul>
+
+    <h3>RPM (Fedora, RHEL, CentOS, openSUSE)</h3>
+    <ul class="download-list">
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-linux-x64-{version}.rpm" data-r2="">x86 64-bit</a></li>
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-linux-arm64-{version}.rpm" data-r2="">ARM 64-bit</a></li>
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-linux-armv7l-{version}.rpm" data-r2="">ARMv7l</a></li>
+    </ul>
+
+    <h3>Pacman (Arch Linux)</h3>
+    <ul class="download-list">
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-x64-{version}.pkg.tar.zst" data-r2="">x86 64-bit</a></li>
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-arm64-{version}.pkg.tar.zst" data-r2="">ARM 64-bit</a></li>
+      <li><a class="download-button" href="https://github.com/Bilup/desktop/releases"
+          data-asset="Bilup-armv7l-{version}.pkg.tar.zst" data-r2="">ARMv7l</a></li>
     </ul>
   </div>
 
