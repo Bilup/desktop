@@ -11,8 +11,8 @@ jobs:
     steps:
     - name: generate PKGBUILD and .SRCINFO
       run: |
-        TAG=${{ github.event.workflow_run.head_branch }}
-        echo '${TAG}'
+        TAG=$(curl -s https://api.github.com/repos/Bilup/desktop/releases/latest | grep -o '"tag_name": "[^"]*' | cut -d'"' -f4)
+        echo "Latest release tag: ${TAG}"
         VERSION=${TAG#v}
         cat > PKGBUILD << EOF
         # Maintainer: RyaninCn11 <me@ryanincn11.me>

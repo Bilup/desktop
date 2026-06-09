@@ -208,6 +208,6 @@ jobs:
           node scripts/upload-to-github-releases.mjs \
             "${{ github.repository_owner }}" \
             "${{ github.event.repository.name }}" \
-            "artifacts/*.{exe,dmg,deb,zip,tar.gz,AppImage,snap,rpm,zst,appx}"
+            "artifacts/*.{exe,dmg,deb,tar.gz,AppImage,snap,rpm,zst}"
         env:
           GH_TOKEN: "${{ github.token }}"
