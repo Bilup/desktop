@@ -11,6 +11,7 @@ jobs:
     - name: generate PKGBUILD and .SRCINFO
       run: |
         TAG=$(curl -s https://api.github.com/repos/Bilup/desktop/releases/latest | grep -o '"tag_name": "[^"]*' | cut -d'"' -f4)
+        url="https://github.com/Bilup"
         echo "Latest release tag: ${TAG}"
         VERSION=${TAG#v}
         cat > PKGBUILD << EOF
@@ -71,7 +72,7 @@ jobs:
           depends = libxss
           depends = xdg-utils
           depends = hicolor-icon-theme
-          provides = bilup-bin
+          provides = bilup
           source_x86_64=("bilup-\${pkgver}-x86_64.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-amd64-\${pkgver}.deb")
           source_armv7h=("bilup-\${pkgver}-armv7h.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-armv7l-\${pkgver}.deb")
           source_aarch64=("bilup-\${pkgver}-aarch64.deb::${url}/Desktop/releases/download/${TAG}/Bilup-linux-arm64-\${pkgver}.deb")
