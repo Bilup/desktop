@@ -4,24 +4,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (function() {
+      var theme = 'dark';
+      try {
+        var themeSetting = localStorage.getItem('tw:theme');
+        if (themeSetting === 'light') {
+          theme = 'light';
+        } else if (themeSetting === 'dark') {
+          theme = 'dark';
+        } else if (themeSetting) {
+          try {
+            var parsed = JSON.parse(themeSetting);
+            if (parsed.gui === 'dark' || parsed.gui === 'light') {
+              theme = parsed.gui;
+            }
+          } catch (e) {}
+        }
+      } catch (e) {}
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
   <style>
+    :root,
+    [data-theme="dark"] {
+      --bg-color: #333;
+      --text-color: #fff;
+      --accent-color: #75C1C4;
+      --secondary-bg: #555;
+      --border-color: rgba(117, 193, 196, 0.3);
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f5f5f5;
+      --text-color: #333;
+      --accent-color: #75C1C4;
+      --secondary-bg: #e0e0e0;
+      --border-color: rgba(117, 193, 196, 0.4);
+    }
+
     body {
-      background: #333;
+      background: var(--bg-color);
       background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
       background-size: 32px 32px;
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "Noto Sans", Helvetica, Arial, sans-serif;
-      color: #fff;
+      color: var(--text-color);
       line-height: 1.5;
       min-height: 100vh;
       display: flex;
       padding: 2rem;
-      accent-color: #75C1C4;
+      accent-color: var(--accent-color);
+    }
+
+    [data-theme="light"] body {
+      background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
     }
 
     h1,
     p,
     ul {
       margin: 0;
+      color: var(--text-color);
     }
 
     .file-path,
@@ -29,6 +72,7 @@
       font-family: monospace;
       white-space: pre-wrap;
       word-break: break-all;
+      color: var(--text-color);
     }
 
     .command::before {
