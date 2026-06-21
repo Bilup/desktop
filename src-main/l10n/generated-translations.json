@@ -47,6 +47,7 @@
         "downgrade-warning.message": "您正在使用旧版本{APP_NAME}，在使用较新版本之前，请退出并从此处下载最新版本。{website}\n\n如果你继续，可能因为版本问题永久丢失你的设置和背包。这些数据将无法被恢复。\n\n（调试信息：{debugInfo}）",
         "downgrade-warning.title": "不支持降级至旧版本",
         "extension-documentation.title": "{APP_NAME}扩展文档",
+        "packager.title": "打包器",
         "file-access.flatpak": "Flatpak 沙盒可能正在阻止 {APP_NAME} 访问您拖入的文件",
         "file-access.how-to-fix": "尝试使用内置的文件选择器而不是拖入文件，或者在终端中运行以下命令并重新启动应用以授予访问权限：",
         "file-access.window-title": "无法访问文件",

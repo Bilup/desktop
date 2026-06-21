@@ -1,5 +1,5 @@
 const AbstractWindow = require('./abstract');
-const {PACKAGER_NAME} = require('../brand');
+const {translate} = require('../l10n');
 const PackagerPreviewWindow = require('./packager-preview');
 const prompts = require('../prompts');
 const FileAccessWindow = require('./file-access-window');
@@ -11,7 +11,7 @@ class PackagerWindow extends AbstractWindow {
     /** @type {AbstractWindow} */
     this.editorWindow = editorWindow;
 
-    this.window.setTitle(PACKAGER_NAME);
+    this.window.setTitle(translate('packager.title'));
     this.window.on('page-title-updated', (event) => {
       event.preventDefault();
     });

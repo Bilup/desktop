@@ -486,5 +486,9 @@
   "extension-documentation.title": {
     "string": "{APP_NAME} Extension Documentation",
     "developer_comment": "Title of in-app window for viewing extension documentation."
+  },
+  "packager.title": {
+    "string": "Packager",
+    "developer_comment": "Title of packager window"
   }
 }
