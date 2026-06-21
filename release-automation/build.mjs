@@ -155,7 +155,7 @@ const afterPack = async (context) => {
 
   // When electron-builder packs the folder, modification times of the files are
   // preserved for some formats, so ensure that modification times are reproducible.
-  recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
+  // recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
 };
 
 const afterPackForUniversalMac = async (context) => {
@@ -172,7 +172,7 @@ const afterPackForUniversalMac = async (context) => {
 const afterSign = async (context) => {
   // Ensure that modification times are still reproducible after signing and resource
   // editing.
-  recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
+  // recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
 };
 
 const build = async ({
