@@ -159,9 +159,12 @@ const afterPack = async (context) => {
 };
 
 const afterPackForUniversalMac = async (context) => {
-  // Apply fuses on all architectures (x64, arm64, universal) before signing
-  // This ensures fuses are modified before codesign, preventing invalid signature
-  await flipFuses(context);
+  // For universal binaries on macOS, we should only need to apply fuses at the end of the build,
+  // not on each child build that happens for Intel and ARM.
+  // https://github.com/electron-userland/electron-builder/issues/6365#issuecomment-1191747089
+  if (context.arch === Arch.universal) {
+    await flipFuses(context);
+  }
 
   recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
 };
