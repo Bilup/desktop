@@ -151,7 +151,7 @@ const recursivelySetFileTimes = (directory, date) => {
 };
 
 const afterPack = async (context) => {
-  await flipFuses(context);
+  // await flipFuses(context);
 
   // When electron-builder packs the folder, modification times of the files are
   // preserved for some formats, so ensure that modification times are reproducible.
@@ -162,11 +162,11 @@ const afterPackForUniversalMac = async (context) => {
   // For universal binaries on macOS, we should only need to apply fuses at the end of the build,
   // not on each child build that happens for Intel and ARM.
   // https://github.com/electron-userland/electron-builder/issues/6365#issuecomment-1191747089
-  if (context.arch === Arch.universal) {
-    await flipFuses(context);
-  }
+  // if (context.arch === Arch.universal) {
+  //   await flipFuses(context);
+  // }
 
-  recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
+  // recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
 };
 
 const afterSign = async (context) => {
