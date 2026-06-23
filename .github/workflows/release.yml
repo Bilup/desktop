@@ -104,13 +104,27 @@ jobs:
         run: npm install -g yarn
       - name: Install dependencies
         run: yarn install --ignore-engines --ignore-scripts
-      - name: Package
-        run: node release-automation/build.mjs ${{ matrix.args }} --production
-      - name: Ad-hoc sign app
+      - name: Build macOS app
+        run: node release-automation/build.mjs --mac-dir --production
+      - name: Re-sign app
         run: |
           APP_PATH=$(find dist -name "*.app" -type d | head -1)
           if [ -n "$APP_PATH" ]; then
             codesign --force --deep --sign - "$APP_PATH"
+          fi
+      - name: Verify signature
+        run: |
+          APP_PATH=$(find dist -name "*.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+          fi
+      - name: Create DMG
+        run: |
+          APP_PATH=$(find dist -name "*.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            APP_NAME=$(basename "$APP_PATH" .app)
+            DMG_NAME="Bilup-Setup-${APP_NAME#*-}-${{ github.ref_name }}.dmg"
+            hdiutil create -volname Bilup -srcfolder "$APP_PATH" -ov -format UDZO "dist/$DMG_NAME"
           fi
       - uses: actions/upload-artifact@v4
         with:
