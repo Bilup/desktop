@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.3",
+    "date": "2026-6-24",
+    "notes": [
+      "Fix some known issues",
+      "Update markdown",
+      "Update shortcuts manager"
+    ]
+  },
+  {
     "version": "1.5.2",
     "date": "2026-6-9",
     "notes": [
