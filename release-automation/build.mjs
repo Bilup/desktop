@@ -156,6 +156,19 @@ const afterPack = async (context) => {
   // When electron-builder packs the folder, modification times of the files are
   // preserved for some formats, so ensure that modification times are reproducible.
   // recursivelySetFileTimes(context.appOutDir, sourceDateEpoch);
+
+  // Apply ad-hoc signature on macOS to ensure the app can run
+  if (context.electronPlatformName === 'darwin') {
+    const appPath = context.appOutDir;
+    console.log(`Signing macOS app: ${appPath}`);
+    const { spawnSync } = require('child_process');
+    const result = spawnSync('codesign', ['--force', '--deep', '--sign', '-', appPath]);
+    if (result.status !== 0) {
+      console.error(`Code signing failed: ${result.stderr?.toString() || result.stdout?.toString()}`);
+    } else {
+      console.log('Code signing completed successfully');
+    }
+  }
 };
 
 const afterPackForUniversalMac = async (context) => {
@@ -321,6 +334,36 @@ const buildMacDir = () => build({
   manageUpdates: true
 });
 
+const buildMacDirLegacy10131014 = () => build({
+  platformName: 'MAC',
+  platformType: 'dir',
+  manageUpdates: true,
+  legacy: true,
+  extraConfig: {
+    electronVersion: ELECTRON_26_FINAL
+  }
+});
+
+const buildMacDirLegacy1015 = () => build({
+  platformName: 'MAC',
+  platformType: 'dir',
+  manageUpdates: true,
+  legacy: true,
+  extraConfig: {
+    electronVersion: ELECTRON_32_FINAL
+  }
+});
+
+const buildMacDirLegacy11 = () => build({
+  platformName: 'MAC',
+  platformType: 'dir',
+  manageUpdates: true,
+  legacy: true,
+  extraConfig: {
+    electronVersion: ELECTRON_37_FINAL
+  }
+});
+
 // Linux
 
 const buildDebian = () => build({
@@ -430,6 +473,9 @@ const run = async () => {
     '--mac-legacy-10.15': buildMacLegacy1015,
     '--mac-legacy-11': buildMacLegacy11,
     '--mac-dir': buildMacDir,
+    '--mac-dir-legacy-10.13-10.14': buildMacDirLegacy10131014,
+    '--mac-dir-legacy-10.15': buildMacDirLegacy1015,
+    '--mac-dir-legacy-11': buildMacDirLegacy11,
     '--debian': buildDebian,
     '--tarball': buildTarball,
     '--appimage': buildAppImage,
