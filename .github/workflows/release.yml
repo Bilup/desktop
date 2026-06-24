@@ -122,8 +122,7 @@ jobs:
         run: |
           APP_PATH=$(find dist -name "*.app" -type d | head -1)
           if [ -n "$APP_PATH" ]; then
-            APP_NAME=$(basename "$APP_PATH" .app)
-            DMG_NAME="Bilup-Setup-${APP_NAME#*-}-${{ github.ref_name }}.dmg"
+            DMG_NAME="Bilup-Setup-${{ matrix.target }}-${{ github.ref_name }}.dmg"
             hdiutil create -volname Bilup -srcfolder "$APP_PATH" -ov -format UDZO "dist/$DMG_NAME"
           fi
       - uses: actions/upload-artifact@v4
