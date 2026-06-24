@@ -161,7 +161,7 @@ const afterPack = async (context) => {
   if (context.electronPlatformName === 'darwin') {
     const appPath = context.appOutDir;
     console.log(`Signing macOS app: ${appPath}`);
-    const { spawnSync } = require('child_process');
+    const { spawnSync } = await import('child_process');
     const result = spawnSync('codesign', ['--force', '--deep', '--sign', '-', appPath]);
     if (result.status !== 0) {
       console.error(`Code signing failed: ${result.stderr?.toString() || result.stdout?.toString()}`);
