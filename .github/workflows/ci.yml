@@ -75,6 +75,8 @@ jobs:
         with:
           name: linux-${{ matrix.format }}-${{ matrix.arch }}
           path: dist/*
+          retention-days: 15
+
   package-mac:
     needs: build
     runs-on: macos-latest
@@ -118,6 +120,8 @@ jobs:
         with:
           name: mac-${{ matrix.target }}
           path: dist/*.dmg
+          retention-days: 15
+
   package-windows:
     needs: build
     runs-on: windows-latest
@@ -194,4 +198,4 @@ jobs:
         with:
           name: windows-${{ matrix.target }}
           path: D:\repo\dist\${{ matrix.files }}
-          retention-days: 1
+          retention-days: 15
