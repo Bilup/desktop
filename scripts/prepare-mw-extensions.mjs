@@ -116,22 +116,17 @@ const buildMWOfflineFiles = async () => {
     if (!extension || typeof extension !== 'object') {
       continue;
     }
-    if (typeof extension.slug === 'string' && extension.slug) {
-      requiredFiles.add(`${extension.slug}.js`);
-      if (extension.docs) {
-        optionalFiles.add(`${extension.slug}.html`);
-      }
+    // Mistium uses `filename` field and different directory structure
+    // Featured extensions are in /featured/ directory, others in /files/ directory
+    if (typeof extension.filename === 'string' && extension.filename) {
+      const directory = extension.featured ? 'featured' : 'files';
+      requiredFiles.add(`${directory}/${extension.filename}`);
     }
+    // Mistium images are in /images/ directory
     if (typeof extension.image === 'string' && extension.image) {
-      requiredFiles.add(extension.image);
+      requiredFiles.add(`images/${extension.image}`);
     }
-    if (Array.isArray(extension.samples)) {
-      for (const sample of extension.samples) {
-        if (typeof sample === 'string' && sample) {
-          optionalFiles.add(`samples/${sample}.sb3`);
-        }
-      }
-    }
+    // Mistium doesn't use samples, docs in the same format as TurboWarp
   }
 
   await writeCompressed(outputDirectory, metadataPath, metadataBuffer);
