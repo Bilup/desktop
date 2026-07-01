@@ -122,9 +122,8 @@ const buildMWOfflineFiles = async () => {
       const directory = extension.featured ? 'featured' : 'files';
       requiredFiles.add(`${directory}/${extension.filename}`);
     }
-    // Mistium images are in /images/ directory
     if (typeof extension.image === 'string' && extension.image) {
-      requiredFiles.add(`images/${extension.image}`);
+      requiredFiles.add(extension.image);
     }
     // Mistium doesn't use samples, docs in the same format as TurboWarp
   }
