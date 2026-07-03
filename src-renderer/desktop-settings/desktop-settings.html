@@ -482,7 +482,11 @@
 
       cloudExtensions.onchange = () => {
         currentCloudExtensions = cloudExtensions.checked;
-        DesktopSettingsPreload.setCloudExtensions(currentCloudExtensions);
+        DesktopSettingsPreload.setCloudExtensions(currentCloudExtensions).then(result => {
+          console.log('[Desktop Settings] cloudExtensions saved:', result);
+        }).catch(err => {
+          console.error('[Desktop Settings] Failed to save cloudExtensions:', err);
+        });
       };
 
       updateCloudExtensionsState(settings.isOnline);

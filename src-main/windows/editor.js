@@ -3,7 +3,7 @@ const path = require('path');
 const nodeURL = require('url');
 const zlib = require('zlib');
 const nodeCrypto = require('crypto');
-const {app, dialog} = require('electron');
+const {app, dialog, net} = require('electron');
 const ProjectRunningWindow = require('./project-running-window');
 const AddonsWindow = require('./addons');
 const DesktopSettingsWindow = require('./desktop-settings');
@@ -594,6 +594,54 @@ class EditorWindow extends ProjectRunningWindow {
 
   applySettings () {
     this.window.webContents.setBackgroundThrottling(settings.backgroundThrottling);
+  }
+
+  onBeforeRequest (details, callback) {
+    if (details.resourceType === 'cspReport' || details.resourceType === 'ping') {
+      return callback({
+        cancel: true
+      });
+    }
+
+    const parsed = new URL(details.url);
+
+    if (!settings.cloudExtensions || !net.isOnline()) {
+      if (parsed.origin === 'https://extensions.turbowarp.org') {
+        return callback({
+          redirectURL: `tw-extensions://.${parsed.pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://extensions.bilup.org') {
+        return callback({
+          redirectURL: `bl-extensions://.${parsed.pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://editors.astras.top') {
+        let pathname = parsed.pathname;
+        if (pathname.startsWith('/extensions')) {
+          pathname = pathname.slice('/extensions'.length);
+        }
+        return callback({
+          redirectURL: `ae-extensions://.${pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://extensions.mistium.com') {
+        return callback({
+          redirectURL: `mw-extensions://.${parsed.pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://sharkpools-extensions.vercel.app') {
+        return callback({
+          redirectURL: `sp-extensions://.${parsed.pathname}`
+        });
+      }
+    }
+
+    super.onBeforeRequest(details, callback);
   }
 
   enumerateMediaDevices () {

@@ -106,6 +106,11 @@ class DesktopSettingsWindow extends AbstractWindow {
     this.ipc.handle('set-cloud-extensions', async (event, cloudExtensions) => {
       settings.cloudExtensions = cloudExtensions;
       await settings.save();
+      console.log('[Desktop Settings] cloudExtensions set to:', cloudExtensions);
+      return {
+        cloudExtensions: settings.cloudExtensions,
+        isOnline: net.isOnline()
+      };
     });
 
     this.ipc.handle('open-user-data', async () => {
