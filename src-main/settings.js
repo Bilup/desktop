@@ -177,6 +177,13 @@ class Settings {
   set richPresence (richPresence) {
     this.data.richPresence = richPresence;
   }
+
+  get cloudExtensions () {
+    return this.data.cloudExtensions !== false;
+  }
+  set cloudExtensions (cloudExtensions) {
+    this.data.cloudExtensions = cloudExtensions;
+  }
 }
 
 module.exports = new Settings();

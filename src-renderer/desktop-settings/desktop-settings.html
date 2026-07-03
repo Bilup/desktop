@@ -457,6 +457,49 @@
       richPresenceMoreInformation.textContent = strings['desktop-settings.more-information'];
     </script>
 
+    <label>
+      <input type="checkbox" class="cloud-extensions-checkbox" autocomplete="off">
+      <span class="cloud-extensions-label"></span>
+    </label>
+    <div class="warning cloud-extensions-offline" hidden></div>
+    <script>
+      const cloudExtensions = document.querySelector('.cloud-extensions-checkbox');
+      const cloudExtensionsOffline = document.querySelector('.cloud-extensions-offline');
+
+      let currentCloudExtensions = settings.cloudExtensions;
+
+      const updateCloudExtensionsState = (isOnline) => {
+        if (!isOnline) {
+          cloudExtensions.disabled = true;
+          cloudExtensions.checked = false;
+          cloudExtensionsOffline.hidden = false;
+        } else {
+          cloudExtensions.disabled = false;
+          cloudExtensions.checked = currentCloudExtensions;
+          cloudExtensionsOffline.hidden = true;
+        }
+      };
+
+      cloudExtensions.onchange = () => {
+        currentCloudExtensions = cloudExtensions.checked;
+        DesktopSettingsPreload.setCloudExtensions(currentCloudExtensions);
+      };
+
+      updateCloudExtensionsState(settings.isOnline);
+      document.querySelector('.cloud-extensions-label').textContent = strings['desktop-settings.cloud-extensions'];
+      cloudExtensionsOffline.textContent = strings['desktop-settings.cloud-extensions-offline'];
+
+      window.addEventListener('online', () => {
+        DesktopSettingsPreload.getIsOnline().then(isOnline => {
+          updateCloudExtensionsState(isOnline);
+        });
+      });
+
+      window.addEventListener('offline', () => {
+        updateCloudExtensionsState(false);
+      });
+    </script>
+
     <button class="open-user-data"></button>
     <script>
       const openUserData = document.querySelector('.open-user-data');

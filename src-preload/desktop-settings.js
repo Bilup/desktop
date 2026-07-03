@@ -12,5 +12,7 @@ contextBridge.exposeInMainWorld('DesktopSettingsPreload', {
   setSpellchecker: (spellchecker) => ipcRenderer.invoke('set-spellchecker', spellchecker),
   setExitFullscreenOnEscape: (exitFullscreenOnEscape) => ipcRenderer.invoke('set-exit-fullscreen-on-escape', exitFullscreenOnEscape),
   setRichPresence: (richPresence) => ipcRenderer.invoke('set-rich-presence', richPresence),
+  setCloudExtensions: (cloudExtensions) => ipcRenderer.invoke('set-cloud-extensions', cloudExtensions),
+  getIsOnline: () => ipcRenderer.invoke('get-is-online'),
   openUserData: () => ipcRenderer.invoke('open-user-data')
 });

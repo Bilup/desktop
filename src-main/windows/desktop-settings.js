@@ -1,4 +1,4 @@
-const {app, shell} = require('electron');
+const {app, shell, net} = require('electron');
 const AbstractWindow = require('./abstract');
 const {translate, getStrings, getLocale} = require('../l10n');
 const {APP_NAME} = require('../brand');
@@ -29,9 +29,15 @@ class DesktopSettingsWindow extends AbstractWindow {
           spellchecker: settings.spellchecker,
           exitFullscreenOnEscape: settings.exitFullscreenOnEscape,
           richPresenceAvailable: RichPresence.isAvailable(),
-          richPresence: settings.richPresence
+          richPresence: settings.richPresence,
+          cloudExtensions: settings.cloudExtensions,
+          isOnline: net.isOnline()
         }
       };
+    });
+
+    this.ipc.handle('get-is-online', () => {
+      return net.isOnline();
     });
 
     this.ipc.handle('set-update-checker', async (event, updateChecker) => {
@@ -97,6 +103,11 @@ class DesktopSettingsWindow extends AbstractWindow {
       await settings.save();
     });
 
+    this.ipc.handle('set-cloud-extensions', async (event, cloudExtensions) => {
+      settings.cloudExtensions = cloudExtensions;
+      await settings.save();
+    });
+
     this.ipc.handle('open-user-data', async () => {
       shell.showItemInFolder(app.getPath('userData'));
     });
@@ -107,7 +118,7 @@ class DesktopSettingsWindow extends AbstractWindow {
   getDimensions () {
     return {
       width: 550,
-      height: 500
+      height: 550
     };
   }
 

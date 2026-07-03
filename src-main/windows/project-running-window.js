@@ -1,5 +1,6 @@
 const fsPromises = require('fs/promises');
 const path = require('path')
+const {net} = require('electron');
 const AbtractWindow = require('./abstract');
 const settings = require('../settings');
 const askForMediaAccess = require('../media-permissions');
@@ -82,41 +83,40 @@ class ProjectRunningWindow extends AbtractWindow {
       }
     }
 
-    if (parsed.origin === 'https://extensions.turbowarp.org') {
-      return callback({
-        // pathname always has a leading / already
-        redirectURL: `tw-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://extensions.bilup.org') {
-      return callback({
-        // pathname always has a leading / already
-        redirectURL: `bl-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://editors.astras.top') {
-      // Astra 使用 /extensions/ 前缀，需要去掉
-      let pathname = parsed.pathname;
-      if (pathname.startsWith('/extensions')) {
-        pathname = pathname.slice('/extensions'.length);
+    if (!settings.cloudExtensions || !net.isOnline()) {
+      if (parsed.origin === 'https://extensions.turbowarp.org') {
+        return callback({
+          redirectURL: `tw-extensions://.${parsed.pathname}`
+        });
       }
-      return callback({
-        redirectURL: `ae-extensions://.${pathname}`
-      });
-    }
 
-    if (parsed.origin === 'https://extensions.mistium.com') {
-      return callback({
-        redirectURL: `mw-extensions://.${parsed.pathname}`
-      });
-    }
+      if (parsed.origin === 'https://extensions.bilup.org') {
+        return callback({
+          redirectURL: `bl-extensions://.${parsed.pathname}`
+        });
+      }
 
-    if (parsed.origin === 'https://sharkpools-extensions.vercel.app') {
-      return callback({
-        redirectURL: `sp-extensions://.${parsed.pathname}`
-      });
+      if (parsed.origin === 'https://editors.astras.top') {
+        let pathname = parsed.pathname;
+        if (pathname.startsWith('/extensions')) {
+          pathname = pathname.slice('/extensions'.length);
+        }
+        return callback({
+          redirectURL: `ae-extensions://.${pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://extensions.mistium.com') {
+        return callback({
+          redirectURL: `mw-extensions://.${parsed.pathname}`
+        });
+      }
+
+      if (parsed.origin === 'https://sharkpools-extensions.vercel.app') {
+        return callback({
+          redirectURL: `sp-extensions://.${parsed.pathname}`
+        });
+      }
     }
 
     super.onBeforeRequest(details, callback);
