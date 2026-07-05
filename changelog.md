@@ -2,6 +2,12 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 1.5.4 (2026-7-5)
+- Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)
+- Fix some issues with live collaboration
+- Update window animations
+- Add 'Custom Extensions Library'
+
 # 1.5.3 (2026-06-24)
 - Fix some known issues
 - Update markdown

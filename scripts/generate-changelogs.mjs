@@ -1,6 +1,25 @@
 import * as fs from 'node:fs';
 import * as pathUtil from 'node:path';
-import lte from 'semver/functions/lte.js';
+
+const lte = (a, b) => {
+  const pa = a.split(/[.-]/).map(x => /^\d+$/.test(x) ? parseInt(x, 10) : x);
+  const pb = b.split(/[.-]/).map(x => /^\d+$/.test(x) ? parseInt(x, 10) : x);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const va = pa[i] ?? 0;
+    const vb = pb[i] ?? 0;
+    if (typeof va === 'number' && typeof vb === 'number') {
+      if (va < vb) return true;
+      if (va > vb) return false;
+    } else {
+      const sa = String(va);
+      const sb = String(vb);
+      if (sa < sb) return true;
+      if (sa > sb) return false;
+    }
+  }
+  return true;
+};
 
 /**
  * @typedef Release

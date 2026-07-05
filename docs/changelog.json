@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.5.4",
+    "date": "2026-7-4",
+    "notes": [
+      "Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)",
+      "Fix some issues with live collaboration",
+      "Update window animations",
+      "Add 'Custom Extensions Library'"
+    ]
+  },
+  {
     "version": "1.5.3",
     "date": "2026-6-24",
     "notes": [
