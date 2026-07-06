@@ -108,11 +108,12 @@ const extractLocalAssetPathsFromHTML = (html) => {
 const buildTurboWarpOfflineFiles = async () => {
   console.log(`[TurboWarp] Preparing extension cache from ${turboWarpExtensionsBaseURL}`);
 
-  fs.rmSync(outputDirectory, {
+  const tempDirectory = pathUtil.join(import.meta.dirname, '../dist-extensions-temp/');
+  fs.rmSync(tempDirectory, {
     recursive: true,
     force: true
   });
-  console.log('[TurboWarp] Cleared output directory');
+  console.log('[TurboWarp] Created temporary output directory');
 
   console.log(
     `${createFetchLogPrefix('TurboWarp', 'required', 1, 1)} Fetching ${turboWarpMetadataPath}`
@@ -166,7 +167,7 @@ const buildTurboWarpOfflineFiles = async () => {
       `${createFetchLogPrefix('TurboWarp', 'required', requiredIndex, requiredTotal)} Fetching ${file}`
     );
     const data = await fetchTurboWarpFile(file, true);
-    await writeCompressed(outputDirectory, file, data);
+    await writeCompressed(tempDirectory, file, data);
     requiredCount++;
 
     if (file.endsWith('.html')) {
@@ -201,7 +202,7 @@ const buildTurboWarpOfflineFiles = async () => {
       continue;
     }
 
-    await writeCompressed(outputDirectory, file, data);
+    await writeCompressed(tempDirectory, file, data);
     downloadedOptionalFiles.add(file);
     optionalCount++;
 
@@ -215,6 +216,12 @@ const buildTurboWarpOfflineFiles = async () => {
     }
   }
 
+  fs.rmSync(outputDirectory, {
+    recursive: true,
+    force: true
+  });
+  fs.renameSync(tempDirectory, outputDirectory);
+
   console.log(
     `Fetched TurboWarp extensions to ${outputDirectory} (required: ${requiredCount}, optional: ${optionalCount})`
   );
@@ -223,11 +230,12 @@ const buildTurboWarpOfflineFiles = async () => {
 const buildAstraOfflineFiles = async () => {
   console.log(`[Astra] Preparing extension cache from ${astraExtensionsBaseURL}`);
 
-  fs.rmSync(astraOutputDirectory, {
+  const tempAstraDirectory = pathUtil.join(import.meta.dirname, '../dist-astra-extensions-temp/');
+  fs.rmSync(tempAstraDirectory, {
     recursive: true,
     force: true
   });
-  console.log('[Astra] Cleared output directory');
+  console.log('[Astra] Created temporary output directory');
 
   const metadataPath = 'generated-metadata/extensions-v0.json';
   console.log(`${createFetchLogPrefix('Astra', 'required', 1, 1)} Fetching ${metadataPath}`);
@@ -264,7 +272,7 @@ const buildAstraOfflineFiles = async () => {
     }
   }
 
-  await writeCompressed(astraOutputDirectory, metadataPath, metadataBuffer);
+  await writeCompressed(tempAstraDirectory, metadataPath, metadataBuffer);
 
   let requiredCount = 1;
   let optionalCount = 0;
@@ -280,7 +288,7 @@ const buildAstraOfflineFiles = async () => {
     );
     try {
       const data = await fetchAstraFile(file, true);
-      await writeCompressed(astraOutputDirectory, file, data);
+      await writeCompressed(tempAstraDirectory, file, data);
       requiredCount++;
     } catch (error) {
       console.warn(`${createFetchLogPrefix('Astra', 'required', requiredIndex, requiredTotal)} Failed to fetch ${file}:`, error.message);
@@ -296,9 +304,15 @@ const buildAstraOfflineFiles = async () => {
       console.log(`${createFetchLogPrefix('Astra', 'optional', optionalIndex)} Missing ${file}`);
       continue;
     }
-    await writeCompressed(astraOutputDirectory, file, data);
+    await writeCompressed(tempAstraDirectory, file, data);
     optionalCount++;
   }
+
+  fs.rmSync(astraOutputDirectory, {
+    recursive: true,
+    force: true
+  });
+  fs.renameSync(tempAstraDirectory, astraOutputDirectory);
 
   console.log(
     `Fetched Astra extensions to ${astraOutputDirectory} (required: ${requiredCount}, optional: ${optionalCount})`

@@ -93,11 +93,12 @@ const extractLocalAssetPathsFromHTML = (html) => {
 const buildMWOfflineFiles = async () => {
   console.log(`[Mistium] Preparing extension cache from ${mwExtensionsBaseURL}`);
 
-  fs.rmSync(outputDirectory, {
+  const tempDirectory = pathUtil.join(import.meta.dirname, '../dist-mw-extensions-temp/');
+  fs.rmSync(tempDirectory, {
     recursive: true,
     force: true
   });
-  console.log('[Mistium] Cleared output directory');
+  console.log('[Mistium] Created temporary output directory');
 
   const metadataPath = 'generated-metadata/extensions-v0.json';
   console.log(`${createFetchLogPrefix('Mistium', 'required', 1, 1)} Fetching ${metadataPath}`);
@@ -116,8 +117,6 @@ const buildMWOfflineFiles = async () => {
     if (!extension || typeof extension !== 'object') {
       continue;
     }
-    // Mistium uses `filename` field and different directory structure
-    // Featured extensions are in /featured/ directory, others in /files/ directory
     if (typeof extension.filename === 'string' && extension.filename) {
       const directory = extension.featured ? 'featured' : 'files';
       requiredFiles.add(`${directory}/${extension.filename}`);
@@ -125,10 +124,9 @@ const buildMWOfflineFiles = async () => {
     if (typeof extension.image === 'string' && extension.image) {
       requiredFiles.add(extension.image);
     }
-    // Mistium doesn't use samples, docs in the same format as TurboWarp
   }
 
-  await writeCompressed(outputDirectory, metadataPath, metadataBuffer);
+  await writeCompressed(tempDirectory, metadataPath, metadataBuffer);
 
   let requiredCount = 1;
   let optionalCount = 0;
@@ -144,7 +142,7 @@ const buildMWOfflineFiles = async () => {
     );
     try {
       const data = await fetchMWFile(file, true);
-      await writeCompressed(outputDirectory, file, data);
+      await writeCompressed(tempDirectory, file, data);
       requiredCount++;
     } catch (error) {
       console.warn(`${createFetchLogPrefix('Mistium', 'required', requiredIndex, requiredTotal)} Failed to fetch ${file}:`, error.message);
@@ -160,9 +158,15 @@ const buildMWOfflineFiles = async () => {
       console.log(`${createFetchLogPrefix('Mistium', 'optional', optionalIndex)} Missing ${file}`);
       continue;
     }
-    await writeCompressed(outputDirectory, file, data);
+    await writeCompressed(tempDirectory, file, data);
     optionalCount++;
   }
+
+  fs.rmSync(outputDirectory, {
+    recursive: true,
+    force: true
+  });
+  fs.renameSync(tempDirectory, outputDirectory);
 
   console.log(
     `Fetched Mistium extensions to ${outputDirectory} (required: ${requiredCount}, optional: ${optionalCount})`

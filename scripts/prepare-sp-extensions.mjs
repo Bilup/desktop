@@ -65,20 +65,19 @@ const writeCompressed = async (root, relativePath, data) => {
 const buildSPOfflineFiles = async () => {
   console.log(`[SharkPools] Preparing extension cache from ${spExtensionsBaseURL}`);
 
-  fs.rmSync(outputDirectory, {
+  const tempDirectory = pathUtil.join(import.meta.dirname, '../dist-sp-extensions-temp/');
+  fs.rmSync(tempDirectory, {
     recursive: true,
     force: true
   });
-  console.log('[SharkPools] Cleared output directory');
+  console.log('[SharkPools] Created temporary output directory');
 
-  // SharkPools 原始 metadata 路径
   const metadataPath = 'Gallery Files/Extension-Keys.json';
   console.log(`${createFetchLogPrefix('SharkPools', 'required', 1, 1)} Fetching ${metadataPath}`);
   const metadataBuffer = await fetchSPFile(metadataPath, true);
-  await writeCompressed(outputDirectory, metadataPath, metadataBuffer);
+  await writeCompressed(tempDirectory, metadataPath, metadataBuffer);
   console.log('[SharkPools] Saved original metadata');
 
-  // 解析 metadata 获取需要下载的文件列表
   const rawMetadata = JSON.parse(metadataBuffer.toString('utf-8'));
   let extensions = [];
 
@@ -88,22 +87,18 @@ const buildSPOfflineFiles = async () => {
     extensions = Object.values(rawMetadata.extensions);
   }
 
-  // 收集需要下载的文件
   const requiredFiles = new Set();
   const optionalFiles = new Set();
 
   for (const extension of extensions) {
-    // SharkPools: extension-code/{url}
     if (extension.url) {
       requiredFiles.add(`extension-code/${extension.url}`);
     }
-    // SharkPools: extension-thumbs/{banner}
     if (extension.banner) {
       optionalFiles.add(`extension-thumbs/${extension.banner}`);
     }
   }
 
-  // 下载扩展代码文件
   let requiredCount = 0;
   const requiredTotal = requiredFiles.size;
   let requiredIndex = 0;
@@ -114,14 +109,13 @@ const buildSPOfflineFiles = async () => {
     );
     try {
       const data = await fetchSPFile(file, true);
-      await writeCompressed(outputDirectory, file, data);
+      await writeCompressed(tempDirectory, file, data);
       requiredCount++;
     } catch (error) {
       console.warn(`${createFetchLogPrefix('SharkPools', 'required', requiredIndex, requiredTotal)} Failed to fetch ${file}:`, error.message);
     }
   }
 
-  // 下载可选文件
   let optionalCount = 0;
   let optionalIndex = 0;
   for (const file of optionalFiles) {
@@ -132,9 +126,15 @@ const buildSPOfflineFiles = async () => {
       console.log(`${createFetchLogPrefix('SharkPools', 'optional', optionalIndex)} Missing ${file}`);
       continue;
     }
-    await writeCompressed(outputDirectory, file, data);
+    await writeCompressed(tempDirectory, file, data);
     optionalCount++;
   }
+
+  fs.rmSync(outputDirectory, {
+    recursive: true,
+    force: true
+  });
+  fs.renameSync(tempDirectory, outputDirectory);
 
   console.log(
     `Fetched SharkPools extensions to ${outputDirectory} (required: ${requiredCount}, optional: ${optionalCount})`
