@@ -2,7 +2,10 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
-# 1.5.4 (2026-7-5)
+# 1.6.0 (2026-07-10)
+- Big update (from MistWarp)
+
+# 1.5.4 (2026-07-05)
 - Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)
 - Fix some issues with live collaboration
 - Update window animations
