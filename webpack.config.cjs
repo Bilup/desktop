@@ -6,46 +6,16 @@ const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devtool: process.env.NODE_ENV === 'production' ? false : 'cheap-source-map',
     target: 'web',
-    // Bundle size warnings are meaningless for a desktop app that loads its
-    // resources from local disk, and in this toolchain they fail the build.
-    performance: {
-        hints: false
+    resolve: {
+        // GUI-pinned lucide (webpack 4 cannot parse lucide 1.x ESM) + CJS rotur-sdk
+        alias: {
+            'lucide-react': path.resolve(__dirname, 'node_modules/scratch-gui/node_modules/lucide-react'),
+            'rotur-sdk': path.resolve(__dirname, 'node_modules/scratch-gui/node_modules/rotur-sdk/dist/index.js')
+        },
+        mainFields: ['browser', 'main', 'module']
     },
     module: {
         rules: [
-            {
-                test: /\.tsx?$/,
-                use: [
-                    {
-                        loader: 'babel-loader',
-                        options: {
-                            babelrc: false,
-                            presets: ['@babel/preset-env', '@babel/preset-react']
-                        }
-                    },
-                    {
-                        loader: 'ts-loader',
-                        options: {
-                            transpileOnly: true,
-                            configFile: 'tsconfig.json'
-                        }
-                    }
-                ],
-                include: (filePath) => {
-                    const normalizedPath = filePath.toLowerCase();
-                    if (normalizedPath.includes('node_modules')) {
-                        if (normalizedPath.includes('scratch-gui') ||
-                            normalizedPath.includes('pify') ||
-                            normalizedPath.includes('@vernier') ||
-                            normalizedPath.includes('@chenglou') ||
-                            normalizedPath.includes('isomorphic-git')) {
-                            return true;
-                        }
-                        return false;
-                    }
-                    return true;
-                }
-            },
             {
                 test: /\.m?jsx?$/,
                 loader: 'babel-loader',
