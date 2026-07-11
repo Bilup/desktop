@@ -2,6 +2,11 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 1.6.1 (2026-07-11)
+- Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)
+- Fix some translation issues
+- Fix some known issues
+
 # 1.6.0 (2026-07-10)
 - Big update (from MistWarp)
 

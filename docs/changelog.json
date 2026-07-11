@@ -1,14 +1,23 @@
 [
   {
+    "version": "1.6.1",
+    "date": "2026-7-11",
+    "notes": [
+      "Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)",
+      "Fix some translation issues",
+      "Fix some known issues"
+    ]
+  },
+  {
     "version": "1.6.0",
-    "date": "2026-07-10",
+    "date": "2026-7-10",
     "notes": [
       "Big update (from MistWarp)"
     ]
   },
   {
     "version": "1.5.4",
-    "date": "2026-7-4",
+    "date": "2026-7-5",
     "notes": [
       "Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)",
       "Fix some issues with live collaboration",
