@@ -26,6 +26,7 @@
     "@babel/preset-react": "^7.13.13",
     "@electron/fuses": "^2.0.0",
     "@turbowarp/extensions": "github:TurboWarp/extensions#master",
+    "@turbowarp/scratch-svg-renderer": "^1.1.0",
     "@bilup/extensions": "github:Bilup/extensions#main",
     "jszip": "^3.10.1",
     "adm-zip": "^0.5.16",
