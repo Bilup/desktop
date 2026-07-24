@@ -8,6 +8,7 @@ Run this to get the desktop files onto your computer
 ```bash
 git clone --recursive https://github.com/Bilup/desktop bilup-desktop
 ```
+
 Then run this to update and build the desktop application
 ```bash
 cd bilup-desktop
