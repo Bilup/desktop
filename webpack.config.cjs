@@ -181,6 +181,10 @@ module.exports = [
                 // (uses import.meta/createRequire and can't be parsed).
                 // Force the browser bundle instead.
                 'just-bash$': path.resolve(__dirname, 'node_modules/just-bash/dist/bundle/browser.js'),
+                // The browser bundle of just-bash still imports "node:zlib"
+                // for its gzip/gunzip commands. Provide a stub that reports
+                // compression as unavailable in the browser terminal.
+                'node:zlib$': path.resolve(__dirname, 'src-renderer-webpack/editor/gui/just-bash-zlib.js'),
             }
         }
     },
