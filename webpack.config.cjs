@@ -6,6 +6,11 @@ const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devtool: process.env.NODE_ENV === 'production' ? false : 'cheap-source-map',
     target: 'web',
+    // Bundle size warnings are meaningless for a desktop app that loads its
+    // resources from local disk, and in this toolchain they fail the build.
+    performance: {
+        hints: false
+    },
     module: {
         rules: [
             {
