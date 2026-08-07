@@ -29,16 +29,52 @@ const toRemoteURL = (baseURL, relativePath) => {
   return `${baseURL}/${encodedPath}`;
 };
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 const fetchRemoteFile = async (baseURL, relativePath, required = true) => {
   const url = toRemoteURL(baseURL, relativePath);
-  const response = await fetch(url);
-  if (!response.ok) {
-    if (required) {
-      throw new Error(`Failed to fetch ${url}: HTTP ${response.status}`);
+  const maxAttempts = 5;
+
+  let lastError = null;
+  for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber++) {
+    let response = null;
+    try {
+      response = await fetch(url, {
+        headers: {
+          // Some hosts (e.g. Cloudflare/Vercel) may return 503 for
+          // requests that don't carry a browser-like User-Agent.
+          'User-Agent': 'Mozilla/5.0 (compatible; Bilup/1.0)'
+        }
+      });
+    } catch (error) {
+      lastError = error;
     }
-    return null;
+
+    if (response && response.ok) {
+      return Buffer.from(await response.arrayBuffer());
+    }
+
+    const status = response ? response.status : null;
+    // Only transient failures are worth retrying: network errors,
+    // 429 (rate limited) and 5xx (temporary server errors).
+    const isTransient = !response || status === 429 || status >= 500;
+    if (!isTransient || attemptNumber === maxAttempts) {
+      if (required) {
+        if (response) {
+          throw new Error(`Failed to fetch ${url}: HTTP ${status}`);
+        }
+        throw lastError;
+      }
+      return null;
+    }
+
+    const waitMs = 500 * 2 ** (attemptNumber - 1) + Math.floor(Math.random() * 500);
+    console.warn(
+      `[fetch] ${url} ${response ? `returned HTTP ${status}` : 'failed to connect'}, ` +
+      `retrying in ${waitMs}ms (attempt ${attemptNumber + 1}/${maxAttempts})`
+    );
+    await sleep(waitMs);
   }
-  return Buffer.from(await response.arrayBuffer());
 };
 
 const fetchSPFile = async (relativePath, required = true) =>

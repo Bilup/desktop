@@ -42,14 +42,14 @@ const base = {
                 }
             },
             {
-                test: /\.jsx?$/,
+                test: /\.m?jsx?$/,
                 loader: 'babel-loader',
                 options: {
                     presets: ['@babel/preset-env', '@babel/preset-react']
                 }
             },
             {
-                test: /\.(svg|png|wav|gif|jpg|mp3|woff2|hex)$/,
+                test: /\.(svg|png|wav|gif|jpg|mp3|ttf|woff|woff2|eot|hex)$/,
                 loader: 'file-loader',
                 options: {
                     outputPath: 'static/assets/',
@@ -57,7 +57,15 @@ const base = {
                 }
             },
             {
+                // These packages ship CSS that relies on global class names
+                // (e.g. monaco's .codicon, xterm's .xterm, fontsource's
+                // @font-face), so they must NOT be processed with CSS modules.
+                test: /node_modules[\\/](?:@fontsource|@xterm[\\/]xterm|monaco-editor)[\\/].*\.css$/,
+                use: ['style-loader', 'css-loader']
+            },
+            {
                 test: /\.css$/,
+                exclude: /node_modules[\\/](?:@fontsource|@xterm[\\/]xterm|monaco-editor)[\\/]/,
                 use: [
                     {
                         loader: 'style-loader'
@@ -163,6 +171,11 @@ module.exports = [
                 'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
                 'scratch-gui$': path.resolve(__dirname, 'node_modules/scratch-gui/src/index.js'),
                 'scratch-render-fonts$': path.resolve(__dirname, 'node_modules/scratch-gui/src/lib/tw-scratch-render-fonts'),
+                // webpack 4 ignores the "exports" field and resolves just-bash
+                // via its "main" field, which points at the Node bundle
+                // (uses import.meta/createRequire and can't be parsed).
+                // Force the browser bundle instead.
+                'just-bash$': path.resolve(__dirname, 'node_modules/just-bash/dist/bundle/browser.js'),
             }
         }
     },
