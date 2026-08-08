@@ -25,18 +25,6 @@ class SettingsWindow extends AbstractWindow {
     return '#ffffff';
   }
 
-  handleWindowOpen (details) {
-    // The Bilup Accounts login flow opens a popup; rotur-sdk falls back to a
-    // fullscreen iframe when window.open is denied, so don't also open the
-    // auth page in the system browser.
-    if (new URL(details.url).origin === 'https://accounts.bilup.org') {
-      return {
-        action: 'deny'
-      };
-    }
-    return super.handleWindowOpen(details);
-  }
-
   static show () {
     const window = AbstractWindow.singleton(SettingsWindow);
     window.show();

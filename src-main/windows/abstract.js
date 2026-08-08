@@ -213,6 +213,12 @@ class AbstractWindow {
    * @param {Electron.HandlerDetails} details
    */
   handleWindowOpen (details) {
+    // Open the Bilup Accounts login page in an in-app window instead of the
+    // system browser so that the rotur-sdk postMessage flow can complete.
+    if (new URL(details.url).origin === 'https://accounts.bilup.org') {
+      const AccountsLoginWindow = require('./accounts-login');
+      return AccountsLoginWindow.open(details.url);
+    }
     openExternal(details.url);
     return {
       action: 'deny'
