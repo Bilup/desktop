@@ -24,6 +24,13 @@ const MONTHS = [
   'December'
 ];
 
+const formatIsoDate = (date) => {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 const escapeXmlText = (xml) => xml.replace(/[<>&]/g, c => {
   // We don't need to escape quotes because we only use this for text, not attributes
   switch (c) {
@@ -97,7 +104,7 @@ const generateHomepage = (releases) => {
 const generateMetainfo = (releases) => {
   let xml = '';
   for (const {version, date, notes} of releases) {
-    xml += `    <release version="${version}" date="${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}">\n`;
+    xml += `    <release version="${version}" date="${formatIsoDate(date)}">\n`;
     xml += `      <url type="details">https://github.com/Bilup/desktop/releases/tag/v${version}</url>\n`;
     xml += '      <description>\n';
     xml += '        <ul>\n';
@@ -131,7 +138,7 @@ const generateJSON = (releases) => {
   for (const {version, date, notes} of releases) {
     data.push({
       version,
-      date: `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`,
+      date: formatIsoDate(date),
       notes
     });
   }

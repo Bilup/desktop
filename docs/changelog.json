@@ -1,7 +1,7 @@
 [
   {
     "version": "1.6.1",
-    "date": "2026-7-11",
+    "date": "2026-07-11",
     "notes": [
       "Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)",
       "Fix some translation issues",
@@ -10,14 +10,14 @@
   },
   {
     "version": "1.6.0",
-    "date": "2026-7-10",
+    "date": "2026-07-10",
     "notes": [
       "Big update (from MistWarp)"
     ]
   },
   {
     "version": "1.5.4",
-    "date": "2026-7-5",
+    "date": "2026-07-05",
     "notes": [
       "Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)",
       "Fix some issues with live collaboration",
@@ -27,7 +27,7 @@
   },
   {
     "version": "1.5.3",
-    "date": "2026-6-24",
+    "date": "2026-06-24",
     "notes": [
       "Fix some known issues",
       "Update markdown",
@@ -36,21 +36,21 @@
   },
   {
     "version": "1.5.2",
-    "date": "2026-6-9",
+    "date": "2026-06-09",
     "notes": [
       "Desktop: Fix extension libraries not working in local"
     ]
   },
   {
     "version": "1.5.1",
-    "date": "2026-6-5",
+    "date": "2026-06-05",
     "notes": [
       "Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)"
     ]
   },
   {
     "version": "1.5.0",
-    "date": "2026-5-23",
+    "date": "2026-05-23",
     "notes": [
       "Fix some known issues",
       "Bilup Nova is now available! Now use AI Agents to help you create projects!",
@@ -59,7 +59,7 @@
   },
   {
     "version": "1.4.0",
-    "date": "2026-4-26",
+    "date": "2026-04-26",
     "notes": [
       "Bilup extensions now available in local (No need Internet)",
       "Add warning to uncompatible-for-turbowarp blocks",
@@ -69,14 +69,14 @@
   },
   {
     "version": "1.3.0",
-    "date": "2026-4-13",
+    "date": "2026-04-13",
     "notes": [
       "Fix some known issues"
     ]
   },
   {
     "version": "1.2.0",
-    "date": "2026-4-3",
+    "date": "2026-04-03",
     "notes": [
       "New initial verison after cleaning desktop repo"
     ]
