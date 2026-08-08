@@ -214,5 +214,32 @@ module.exports = [
                 ]
             })
         ]
+    },
+
+    {
+        ...base,
+        output: {
+            path: path.resolve(__dirname, 'dist-renderer-webpack/editor/settings'),
+            filename: 'index.js'
+        },
+        entry: './src-renderer-webpack/editor/settings/index.jsx',
+        resolve: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx'],
+            symlinks: false,
+            alias: {
+                react: path.resolve(__dirname, 'node_modules/react'),
+                'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+            }
+        },
+        plugins: [
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        context: 'src-renderer-webpack/editor/settings/',
+                        from: '*.html'
+                    }
+                ]
+            })
+        ]
     }
 ];

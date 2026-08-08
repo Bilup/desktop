@@ -6,6 +6,7 @@ const nodeCrypto = require('crypto');
 const {app, dialog, net} = require('electron');
 const ProjectRunningWindow = require('./project-running-window');
 const AddonsWindow = require('./addons');
+const SettingsWindow = require('./settings');
 const DesktopSettingsWindow = require('./desktop-settings');
 const PrivacyWindow = require('./privacy');
 const AboutWindow = require('./about');
@@ -661,6 +662,18 @@ class EditorWindow extends ProjectRunningWindow {
   handleWindowOpen (details) {
     const url = new URL(details.url);
     const params = new URLSearchParams(url.search);
+
+    // Open the community settings page in a separate window
+    if (
+      url.protocol === 'tw-editor:' &&
+      url.host === '.' &&
+      url.pathname === '/settings'
+    ) {
+      SettingsWindow.show();
+      return {
+        action: 'deny'
+      };
+    }
 
     // Open extension sample projects in-app
     if (
