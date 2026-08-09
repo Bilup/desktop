@@ -8,11 +8,6 @@
   min-height: 640px;
 }
 
-/* The Bilup Accounts login button is not needed in the desktop app. */
-:global([data-mw-item="rotur-account"]) {
-  display: none;
-}
-
 a {
   color: #25d;
   text-decoration: underline;
