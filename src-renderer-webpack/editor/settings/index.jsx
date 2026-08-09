@@ -35,7 +35,7 @@ ReactDOM.render(
   <IntlProvider locale={locale} messages={editorMessages[locale]}>
     <IntlBridge>
       <UserProvider>
-        <Settings />
+        <Settings isScratchDesktop={true} />
       </UserProvider>
     </IntlBridge>
   </IntlProvider>,
