@@ -1,6 +1,6 @@
 # Bilup Desktop
 
-Bilup Desktop is a free, open source desktop application for creating Scratch 3 projects. It is a mod of [TurboWarp](https://turbowarp.org/) (a faster, addon-packed Scratch mod built from the [MistWarp](https://mistwarp.com/) project), with **total Chinese translations**, **live collaboration**, and more.
+Bilup Desktop is a free, open source desktop application for creating Scratch 3 projects. It is a mod of [TurboWarp](https://turbowarp.org/) (a faster, addon-packed Scratch mod built from the [MistWarp](https://warp.mistium.com/) project), with **total Chinese translations**, **live collaboration**, and more.
 
 | | |
 | --- | --- |
