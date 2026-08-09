@@ -1,5 +1,14 @@
 [
   {
+    "version": "2.0.0",
+    "date": "2026-08-09",
+    "notes": [
+      "Big update is available! Now use the newest Bilup to create projects!",
+      "Fix some known issues",
+      "Improve the performance"
+    ]
+  },
+  {
     "version": "1.6.1",
     "date": "2026-07-11",
     "notes": [
