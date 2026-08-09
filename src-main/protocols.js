@@ -3,6 +3,7 @@ const zlib = require('zlib');
 const nodeURL = require('url');
 const {app, protocol, net} = require('electron');
 const {getDist, getPlatform} = require('./platform');
+const settings = require('./settings');
 const packageJSON = require('../package.json');
 
 /**
@@ -60,7 +61,9 @@ const FILE_SCHEMES = {
     stream: true,
     directoryIndex: 'index.html',
     defaultExtension: '.html',
-    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    // 云端优先、失败回退本地的逻辑（remoteFallback）
+    remoteFallback: 'https://extensions.turbowarp.org'
   },
   'bl-extensions': {
     root: path.resolve(__dirname, '../dist-bilup-extensions'),
@@ -70,7 +73,8 @@ const FILE_SCHEMES = {
     stream: true,
     directoryIndex: 'index.html',
     defaultExtension: '.html',
-    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    remoteFallback: 'https://extensions.bilup.org'
   },
   'ae-extensions': {
     root: path.resolve(__dirname, '../dist-astra-extensions'),
@@ -80,7 +84,9 @@ const FILE_SCHEMES = {
     stream: true,
     directoryIndex: 'index.html',
     defaultExtension: '.html',
-    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    // 注意：Astra 云端 URL 带 /extensions 前缀，本地缓存路径不含此前缀
+    remoteFallback: 'https://editors.astras.top/extensions'
   },
   'mw-extensions': {
     root: path.resolve(__dirname, '../dist-mw-extensions'),
@@ -90,7 +96,8 @@ const FILE_SCHEMES = {
     stream: true,
     directoryIndex: 'index.html',
     defaultExtension: '.html',
-    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    remoteFallback: 'https://extensions.mistium.com'
   },
   'sp-extensions': {
     root: path.resolve(__dirname, '../dist-sp-extensions'),
@@ -100,7 +107,11 @@ const FILE_SCHEMES = {
     stream: true,
     directoryIndex: 'index.html',
     defaultExtension: '.html',
-    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    csp: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    // When the file isn't available in the local cache, fall back to the
+    // original remote source. If the remote source also fails, the bundled
+    // cache (and any previously downloaded files) is used instead.
+    remoteFallback: 'https://sharkpools-extensions.vercel.app'
   },
   'tw-update': {
     root: path.resolve(__dirname, '../src-renderer/update'),
@@ -166,6 +177,195 @@ const brotliDecompress = (input) => new Promise((resolve, reject) => {
     }
   });
 });
+
+/**
+ * Promisified zlib.brotliCompress
+ */
+const brotliCompress = (input) => new Promise((resolve, reject) => {
+  zlib.brotliCompress(input, (error, result) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(result);
+    }
+  });
+});
+
+/**
+ * Directory where files downloaded from the remote fallback are cached so
+ * they keep working when the app is offline or the remote is unreachable.
+ */
+const getRuntimeCacheRoot = () => path.join(app.getPath('userData'), 'sp-extensions');
+
+/**
+ * Whether the remote fallback should be attempted right now. After a failed
+ * attempt we enter a short cooldown so we don't hammer an unreachable server
+ * (and force users to wait for timeouts) on every single request.
+ */
+let remoteFallbackCooldownUntil = 0;
+const shouldUseRemoteFallback = (metadata) => (
+  metadata.remoteFallback &&
+  settings.cloudExtensions &&
+  net.isOnline() &&
+  Date.now() >= remoteFallbackCooldownUntil
+);
+
+/**
+ * Builds the remote URL that matches how prepare-sp-extensions.mjs stores files:
+ * every path segment is URL-encoded and joined with "/".
+ * @param {string} baseURL
+ * @param {string} relativePath
+ * @returns {string|null}
+ */
+const toRemoteFallbackURL = (baseURL, relativePath) => {
+  const normalized = String(relativePath).replace(/^\/+/, '').replace(/\\/g, '/');
+  const parts = normalized.split('/').filter(Boolean);
+  if (parts.length === 0 || parts.some(i => i === '..')) {
+    return null;
+  }
+  const encodedPath = parts.map(i => encodeURIComponent(i)).join('/');
+  return `${baseURL}/${encodedPath}`;
+};
+
+/**
+ * Fetch a single file from the remote fallback with a timeout.
+ * @param {string} url
+ * @param {number} timeoutMs
+ * @returns {Promise<Buffer|null>}
+ */
+const fetchRemoteWithTimeout = (url, timeoutMs = 5000) => new Promise((resolve) => {
+  let parsedURL;
+  try {
+    parsedURL = new URL(url);
+  } catch (e) {
+    resolve(null);
+    return;
+  }
+  const mod = parsedURL.protocol === 'http:' ? require('http') : require('https');
+  const request = mod.get(url, {
+    headers: {
+      'user-agent': 'Mozilla/5.0 (compatible; Bilup/1.0)',
+      'accept-encoding': 'identity'
+    }
+  });
+  const timer = setTimeout(() => {
+    request.destroy(new Error('timeout'));
+  }, timeoutMs);
+  request.on('response', (response) => {
+    if (response.statusCode !== 200) {
+      response.resume();
+      clearTimeout(timer);
+      resolve(null);
+      return;
+    }
+    const chunks = [];
+    response.on('data', chunk => chunks.push(chunk));
+    response.on('end', () => {
+      clearTimeout(timer);
+      resolve(Buffer.concat(chunks));
+    });
+  });
+  request.on('error', () => {
+    clearTimeout(timer);
+    resolve(null);
+  });
+});
+
+/**
+ * Saves a remote fallback response into the writable runtime cache.
+ * @param {string} relativePath
+ * @param {Buffer} data
+ */
+const writeRuntimeCache = async (relativePath, data) => {
+  const runtimePath = path.join(getRuntimeCacheRoot(), `${relativePath}.br`);
+  const fsPromises = require('fs/promises');
+  await fsPromises.mkdir(path.dirname(runtimePath), {recursive: true});
+  const compressed = await brotliCompress(data);
+  await fsPromises.writeFile(runtimePath, compressed);
+};
+
+/**
+ * Tries the remote fallback first (when enabled); on failure records a
+ * cooldown so subsequent requests skip straight to the local cache.
+ * @param {Metadata} metadata
+ * @param {string} relativePath
+ * @returns {Promise<Buffer|null>}
+ */
+const tryFetchRemote = async (metadata, relativePath) => {
+  if (!shouldUseRemoteFallback(metadata)) {
+    return null;
+  }
+  const url = toRemoteFallbackURL(metadata.remoteFallback, relativePath);
+  if (!url) {
+    return null;
+  }
+  const data = await fetchRemoteWithTimeout(url);
+  if (!data) {
+    // Remote unreachable: fall back to the local cache for a while.
+    remoteFallbackCooldownUntil = Date.now() + 60 * 1000;
+    console.warn(`[sp-extensions] Failed to fetch ${url}, using local cache`);
+    return null;
+  }
+  remoteFallbackCooldownUntil = 0;
+  writeRuntimeCache(relativePath, data).catch(error => {
+    console.warn(`[sp-extensions] Failed to cache ${relativePath}:`, error.message);
+  });
+  return data;
+};
+
+/**
+ * Reads a file from the local caches: the writable runtime cache first, then
+ * the bundled (read-only) cache.
+ * @param {Metadata} metadata
+ * @param {string} relativePath
+ * @returns {Promise<Buffer|null>}
+ */
+const tryReadLocal = async (metadata, relativePath) => {
+  const fsPromises = require('fs/promises');
+
+  const candidates = [];
+  // The writable runtime cache only exists for schemes that use a remote fallback.
+  if (metadata.remoteFallback) {
+    candidates.push(path.join(getRuntimeCacheRoot(), `${relativePath}.br`));
+  }
+  candidates.push(path.join(metadata.root, `${relativePath}.br`));
+
+  for (const candidate of candidates) {
+    try {
+      const brotliData = await fsPromises.readFile(candidate);
+      return await brotliDecompress(brotliData);
+    } catch (e) {
+      // Try the next cache location.
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Resolves a file for a brotli-cached scheme, trying the remote fallback first
+ * (when configured and enabled) and the local caches afterwards.
+ * @param {Metadata} metadata
+ * @param {string} relativePath
+ * @returns {Promise<Buffer>}
+ */
+const resolveBrotliData = async (metadata, relativePath) => {
+  let data = null;
+
+  if (shouldUseRemoteFallback(metadata)) {
+    data = await tryFetchRemote(metadata, relativePath);
+  }
+
+  if (!data) {
+    data = await tryReadLocal(metadata, relativePath);
+  }
+
+  if (!data) {
+    throw new Error(`Failed to read file: ${relativePath}`);
+  }
+
+  return data;
+};
 
 /**
  * @param {unknown} xml
@@ -288,9 +488,9 @@ const createModernProtocolHandler = (metadata) => {
       };
 
       if (metadata.brotli) {
-        const brotliData = await fsPromises.readFile(`${resolved}.br`);
-        const decompressed = await brotliDecompress(brotliData);
-        return new Response(decompressed, {
+        const relativePath = resolved.slice(root.length);
+        const data = await resolveBrotliData(metadata, relativePath);
+        return new Response(data, {
           headers
         });
       }
@@ -357,11 +557,11 @@ const createLegacyBrotliProtocolHandler = (metadata) => {
 
       // Reading it all into memory is not ideal, but we've had so many problems with streaming
       // files from the asar that I can settle with this.
-      const brotliData = await fsPromises.readFile(`${resolved}.br`);
-      const decompressed = await brotliDecompress(brotliData);
+      const relativePath = resolved.slice(root.length);
+      const data = await resolveBrotliData(metadata, relativePath);
 
       callback({
-        data: decompressed,
+        data,
         headers: {
           ...baseHeaders,
           'content-type': mimeType
