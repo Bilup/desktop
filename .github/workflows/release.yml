@@ -233,6 +233,7 @@ jobs:
           node scripts/upload-to-github-releases.mjs \
             "${{ github.repository_owner }}" \
             "${{ github.event.repository.name }}" \
-            "artifacts/**/*.{exe,dmg,deb,tar.gz,AppImage,snap,rpm,zst}"
+            "artifacts/**/*.{exe,dmg,deb,tar.gz,AppImage,snap,rpm,zst}" \
+            '^Bilup\.Portable\.\d+\.\d+\.\d+\.x64\.exe$'
         env:
           GH_TOKEN: "${{ github.token }}"

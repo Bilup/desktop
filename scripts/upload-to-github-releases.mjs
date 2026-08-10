@@ -134,8 +134,8 @@ const uploadReleaseAsset = async (owner, repo, releaseId, file) => {
 };
 
 const run = async () => {
-    if (process.argv.length !== 5) {
-        throw new Error('Usage: node scripts/upload-to-github-releases.js <owner> <repo> <glob>');
+    if (process.argv.length < 5 || process.argv.length > 6) {
+        throw new Error('Usage: node scripts/upload-to-github-releases.js <owner> <repo> <glob> [excludePattern]');
     }
 
     const owner = process.argv[2];
@@ -145,7 +145,15 @@ const run = async () => {
     const glob = process.argv[4];
     console.log(`Glob: ${glob}`);
 
-    const filesToUpload = await Array.fromAsync(fsPromises.glob(glob));
+    const excludeRegex = process.argv[5] ? new RegExp(process.argv[5]) : null;
+    if (excludeRegex) {
+        console.log(`Exclude pattern: ${process.argv[5]}`);
+    }
+
+    let filesToUpload = await Array.fromAsync(fsPromises.glob(glob));
+    if (excludeRegex) {
+        filesToUpload = filesToUpload.filter((file) => !excludeRegex.test(pathUtil.basename(file)));
+    }
     console.log(`Files to upload: ${filesToUpload.join(', ')}`);
 
     const tagName = getMostRecentTag();
