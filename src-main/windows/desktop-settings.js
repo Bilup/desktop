@@ -31,6 +31,7 @@ class DesktopSettingsWindow extends AbstractWindow {
           richPresenceAvailable: RichPresence.isAvailable(),
           richPresence: settings.richPresence,
           cloudExtensions: settings.cloudExtensions,
+          performanceMode: settings.performanceMode,
           isOnline: net.isOnline()
         }
       };
@@ -85,6 +86,11 @@ class DesktopSettingsWindow extends AbstractWindow {
     this.ipc.handle('set-spellchecker', async (event, spellchecker) => {
       settings.spellchecker = spellchecker;
       AbstractWindow.settingsChanged();
+      await settings.save();
+    });
+
+    this.ipc.handle('set-performance-mode', async (event, performanceMode) => {
+      settings.performanceMode = performanceMode;
       await settings.save();
     });
 

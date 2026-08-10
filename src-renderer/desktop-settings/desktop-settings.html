@@ -369,6 +369,25 @@
     </script>
 
     <label>
+      <input type="checkbox" class="performance-mode-checkbox" autocomplete="off">
+      <span class="performance-mode-label"></span>
+    </label>
+    <div class="warning performance-mode-warning"></div>
+    <script>
+      const performanceMode = document.querySelector('.performance-mode-checkbox');
+      const performanceModeWarning = document.querySelector('.performance-mode-warning');
+      performanceMode.onchange = () => {
+        DesktopSettingsPreload.setPerformanceMode(performanceMode.checked);
+        performanceModeWarning.hidden = !performanceMode.checked;
+      };
+      performanceMode.checked = settings.performanceMode;
+      performanceModeWarning.hidden = !performanceMode.checked;
+
+      document.querySelector('.performance-mode-label').textContent = strings['desktop-settings.performance-mode'];
+      performanceModeWarning.textContent = strings['desktop-settings.performance-mode-warning'];
+    </script>
+
+    <label>
       <input type="checkbox" class="background-throttling-checkbox" autocomplete="off">
       <span class="background-throttling-label"></span>
     </label>

@@ -179,6 +179,9 @@ class AbstractWindow {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // 性能提高模式下缓存并立即编译上次运行生成的 V8 字节码，让冷启动更快。
+      // 代价是磁盘缓存占用增加、首次运行编译开销略增。
+      v8CacheOptions: settings.performanceMode ? 'bypassHeatCheckAndEagerCompile' : 'default'
     };
 
     const preloadName = this.getPreload();

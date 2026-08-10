@@ -20,6 +20,23 @@ require('./crash-messages');
 
 app.enableSandbox();
 
+// 性能提高模式（默认关闭，可在桌面设置中开启）。开启后应用更激进的
+// Chromium/V8 性能参数，让编辑器发挥到极致，代价是更高的 CPU/GPU 占用与功耗。
+if (settings.performanceMode) {
+  // 提高渲染进程 V8 堆内存上限（64 位下默认约 2-4GB）。大型 Scratch 项目
+  // （大背景、大量角色、长音频）加载或运行时可能内存不足而崩溃，放宽到 4GB
+  // 以避免 OOM。该设置只在实际需要时才会占用更多内存。
+  app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
+
+  // 解除 Chromium 默认的 60fps 帧率上限，让编辑器 UI（动画、拖拽、滚动等）
+  // 在高刷新率显示器上运行更流畅。
+  app.commandLine.appendSwitch('disable-frame-rate-limit');
+
+  // 使用 GPU 栅格化与零拷贝合成，将更多渲染工作交给 GPU，减轻 CPU 负担。
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+}
+
 // Allows certain versions of Scratch Link to work without an internet connection
 // https://github.com/LLK/scratch-desktop/blob/4b462212a8e406b15bcf549f8523645602b46064/src/main/index.js#L45
 app.commandLine.appendSwitch('host-resolver-rules', 'MAP device-manager.scratch.mit.edu 127.0.0.1');

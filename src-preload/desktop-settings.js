@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('DesktopSettingsPreload', {
   setBackgroundThrottling: (backgroundThrottling) => ipcRenderer.invoke('set-background-throttling', backgroundThrottling),
   setBypassCORS: (bypassCORS) => ipcRenderer.invoke('set-bypass-cors', bypassCORS),
   setSpellchecker: (spellchecker) => ipcRenderer.invoke('set-spellchecker', spellchecker),
+  setPerformanceMode: (performanceMode) => ipcRenderer.invoke('set-performance-mode', performanceMode),
   setExitFullscreenOnEscape: (exitFullscreenOnEscape) => ipcRenderer.invoke('set-exit-fullscreen-on-escape', exitFullscreenOnEscape),
   setRichPresence: (richPresence) => ipcRenderer.invoke('set-rich-presence', richPresence),
   setCloudExtensions: (cloudExtensions) => ipcRenderer.invoke('set-cloud-extensions', cloudExtensions),

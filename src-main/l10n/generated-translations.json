@@ -36,6 +36,8 @@
         "desktop-settings.notify-stable": "接收稳定更新",
         "desktop-settings.notify-unstable": "接收不稳定更新",
         "desktop-settings.open-user-data": "打开用户数据",
+        "desktop-settings.performance-mode": "启用性能提高模式（重启后生效）",
+        "desktop-settings.performance-mode-warning": "性能提高模式会应用更激进的优化（更高的内存上限、解除帧率上限、GPU 栅格化等），可能会增加 CPU/GPU 占用与功耗。重启应用后生效。",
         "desktop-settings.cloud-extensions": "从云端加载拓展",
         "desktop-settings.cloud-extensions-offline": "当前处于离线状态，拓展将从本地缓存加载。",
         "desktop-settings.rich-presence": "启用 Rich Presence",
