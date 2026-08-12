@@ -1,6 +1,8 @@
 name: CI
 on:
   push:
+    tags-ignore:
+      - 'v*'
 permissions:
   contents: write
 env:

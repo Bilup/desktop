@@ -1,5 +1,14 @@
 [
   {
+    "version": "2.0.1",
+    "date": "2026-08-12",
+    "notes": [
+      "Fix extension libraries(Sharkpool) not working in local.",
+      "Fix some translation issues.",
+      "Update extensions-manager"
+    ]
+  },
+  {
     "version": "2.0.0",
     "date": "2026-08-09",
     "notes": [

@@ -2,6 +2,11 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.1 (2026-08-12)
+- Fix extension libraries(Sharkpool) not working in local.
+- Fix some translation issues.
+- Update extensions-manager
+
 # 2.0.0 (2026-08-09)
 - Big update is available! Now use the newest Bilup to create projects!
 - Fix some known issues
