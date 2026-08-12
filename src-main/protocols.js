@@ -229,11 +229,17 @@ const toRemoteFallbackURL = (baseURL, relativePath) => {
 
 /**
  * Fetch a single file from the remote fallback with a timeout.
+ *
+ * This promise is guaranteed to settle (with Buffer or null) no matter what
+ * happens: network error, non-200 status, timeout, or the server accepting
+ * the connection but never finishing the response body. Without this, a
+ * hanging remote (eg. SharkPools) would leave the protocol handler stuck
+ * forever instead of falling back to the local cache.
  * @param {string} url
  * @param {number} timeoutMs
  * @returns {Promise<Buffer|null>}
  */
-const fetchRemoteWithTimeout = (url, timeoutMs = 5000) => new Promise((resolve) => {
+const fetchRemoteWithTimeout = (url, timeoutMs = 10000) => new Promise((resolve) => {
   let parsedURL;
   try {
     parsedURL = new URL(url);
@@ -241,6 +247,20 @@ const fetchRemoteWithTimeout = (url, timeoutMs = 5000) => new Promise((resolve) 
     resolve(null);
     return;
   }
+
+  let settled = false;
+  let timer = null;
+  const finish = (result) => {
+    if (settled) {
+      return;
+    }
+    settled = true;
+    if (timer) {
+      clearTimeout(timer);
+    }
+    resolve(result);
+  };
+
   const mod = parsedURL.protocol === 'http:' ? require('http') : require('https');
   const request = mod.get(url, {
     headers: {
@@ -248,27 +268,26 @@ const fetchRemoteWithTimeout = (url, timeoutMs = 5000) => new Promise((resolve) 
       'accept-encoding': 'identity'
     }
   });
-  const timer = setTimeout(() => {
-    request.destroy(new Error('timeout'));
+  timer = setTimeout(() => {
+    // 超时：销毁连接并立即结束等待，由调用方回退到本地缓存
+    request.destroy();
+    finish(null);
   }, timeoutMs);
   request.on('response', (response) => {
     if (response.statusCode !== 200) {
       response.resume();
-      clearTimeout(timer);
-      resolve(null);
+      finish(null);
       return;
     }
     const chunks = [];
     response.on('data', chunk => chunks.push(chunk));
-    response.on('end', () => {
-      clearTimeout(timer);
-      resolve(Buffer.concat(chunks));
-    });
+    response.on('end', () => finish(Buffer.concat(chunks)));
+    // 服务器在响应体传完之前断开连接：同样结束等待，回退本地缓存
+    response.on('error', () => finish(null));
+    response.on('aborted', () => finish(null));
+    response.on('close', () => finish(null));
   });
-  request.on('error', () => {
-    clearTimeout(timer);
-    resolve(null);
-  });
+  request.on('error', () => finish(null));
 });
 
 /**
@@ -282,35 +301,6 @@ const writeRuntimeCache = async (relativePath, data) => {
   await fsPromises.mkdir(path.dirname(runtimePath), {recursive: true});
   const compressed = await brotliCompress(data);
   await fsPromises.writeFile(runtimePath, compressed);
-};
-
-/**
- * Tries the remote fallback first (when enabled); on failure records a
- * cooldown so subsequent requests skip straight to the local cache.
- * @param {Metadata} metadata
- * @param {string} relativePath
- * @returns {Promise<Buffer|null>}
- */
-const tryFetchRemote = async (metadata, relativePath) => {
-  if (!shouldUseRemoteFallback(metadata)) {
-    return null;
-  }
-  const url = toRemoteFallbackURL(metadata.remoteFallback, relativePath);
-  if (!url) {
-    return null;
-  }
-  const data = await fetchRemoteWithTimeout(url);
-  if (!data) {
-    // Remote unreachable: fall back to the local cache for a while.
-    remoteFallbackCooldownUntil = Date.now() + 60 * 1000;
-    console.warn(`[sp-extensions] Failed to fetch ${url}, using local cache`);
-    return null;
-  }
-  remoteFallbackCooldownUntil = 0;
-  writeRuntimeCache(relativePath, data).catch(error => {
-    console.warn(`[sp-extensions] Failed to cache ${relativePath}:`, error.message);
-  });
-  return data;
 };
 
 /**
@@ -340,6 +330,50 @@ const tryReadLocal = async (metadata, relativePath) => {
   }
 
   return null;
+};
+
+/**
+ * Tries the remote fallback first (when enabled); on failure records a
+ * cooldown so subsequent requests skip straight to the local cache.
+ *
+ * When the remote responds with content that differs from the local caches,
+ * it is written into the writable runtime cache, effectively "overwriting"
+ * the bundled cache with the latest remote version (the bundled cache ships
+ * inside a read-only asar, so the runtime cache is the override layer that
+ * tryReadLocal() checks first).
+ * @param {Metadata} metadata
+ * @param {string} relativePath
+ * @returns {Promise<Buffer|null>}
+ */
+const tryFetchRemote = async (metadata, relativePath) => {
+  if (!shouldUseRemoteFallback(metadata)) {
+    return null;
+  }
+  const url = toRemoteFallbackURL(metadata.remoteFallback, relativePath);
+  if (!url) {
+    return null;
+  }
+  const data = await fetchRemoteWithTimeout(url);
+  if (!data) {
+    // Remote unreachable: fall back to the local cache for a while.
+    remoteFallbackCooldownUntil = Date.now() + 60 * 1000;
+    console.warn(`[extensions] Failed to fetch ${url}, using local cache`);
+    return null;
+  }
+  remoteFallbackCooldownUntil = 0;
+
+  // 云端读取成功：若内容与本地缓存不一致，则用云端版本覆盖本地
+  // （写入运行时缓存，读取时优先于打包缓存），保证离线时也是最新版本。
+  // 内容一致时跳过写入，避免无谓的磁盘 IO。写入失败不阻断响应。
+  try {
+    const localData = await tryReadLocal(metadata, relativePath);
+    if (!localData || !localData.equals(data)) {
+      await writeRuntimeCache(relativePath, data);
+    }
+  } catch (error) {
+    console.warn(`[extensions] Failed to update local cache for ${relativePath}:`, error.message);
+  }
+  return data;
 };
 
 /**
