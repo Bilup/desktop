@@ -143,3 +143,4 @@ npm run deploy -- 1.2.0-beta.1 # prerelease versions are marked as such
 npm run deploy:watch           # stay attached until the builds finish
 npm run deploy -- --dry-run    # run all the checks without releasing anything
 ```
+ 
