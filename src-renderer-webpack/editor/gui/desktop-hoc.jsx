@@ -64,9 +64,9 @@ const openIframeWindow = (id, title, url, width, height) => {
   }
 };
 
-const handleClickAddonSettings = (search) => {
+const handleClickAddonSettings = (search, title) => {
   const hash = typeof search === 'string' && search ? `#${search}` : '';
-  openIframeWindow('addonSettings', 'Addon Settings', `tw-editor://./addons/addons.html${hash}`, 700, 650);
+  openIframeWindow('addonSettings', title || 'Addon Settings', `tw-editor://./addons/addons.html${hash}`, 700, 650);
 };
 
 const handleClickNewWindow = () => {
@@ -77,14 +77,14 @@ const handleClickPackager = () => {
   EditorPreload.openPackager();
 };
 
-const handleClickPrivacy = () => {
+const handleClickPrivacy = (title) => {
   const updateCheckerAllowed = EditorPreload.getDesktopSettings().updateCheckerAllowed;
-  openIframeWindow('privacyPolicy', 'Privacy Policy', `tw-privacy://./privacy.html?updateChecker=${updateCheckerAllowed}`, 700, 650);
+  openIframeWindow('privacyPolicy', title || 'Privacy Policy', `tw-privacy://./privacy.html?updateChecker=${updateCheckerAllowed}`, 700, 650);
 };
 
-const handleClickAbout = () => {
+const handleClickAbout = (title) => {
   const info = EditorPreload.getAboutInfo();
-  openIframeWindow('aboutWindow', 'About', `tw-about://./about.html?${new URLSearchParams(info)}`, 750, 650);
+  openIframeWindow('aboutWindow', title || 'About', `tw-about://./about.html?${new URLSearchParams(info)}`, 750, 650);
 };
 
 const handleClickSourceCode = () => {
@@ -220,11 +220,11 @@ const DesktopHOC = function (WrappedComponent) {
       if (what === 'settings') {
         this.props.onOpenSettingsModal();
       } else if (what === 'about') {
-        handleClickAbout();
+        handleClickAbout(this.messages['about'].replace('{APP_NAME}', EditorPreload.getAboutInfo().appName));
       } else if (what === 'addons') {
-        handleClickAddonSettings();
+        handleClickAddonSettings(null, this.messages['addon-settings']);
       } else if (what === 'privacy') {
-        handleClickPrivacy();
+        handleClickPrivacy(this.messages['privacy-policy']);
       }
     }
     handleUpdateProjectTitle (newTitle) {
@@ -256,18 +256,18 @@ const DesktopHOC = function (WrappedComponent) {
         <WrappedComponent
           projectTitle={this.state.title}
           onUpdateProjectTitle={this.handleUpdateProjectTitle}
-          onClickAddonSettings={handleClickAddonSettings}
+          onClickAddonSettings={(search) => handleClickAddonSettings(search, this.messages['addon-settings'])}
           onClickNewWindow={handleClickNewWindow}
           onClickPackager={handleClickPackager}
           onClickAbout={[
             {
               title: this.messages['in-app-about.privacy'],
-              onClick: handleClickPrivacy,
+              onClick: () => handleClickPrivacy(this.messages['privacy-policy']),
               icon: 'shield'
             },
             {
               title: this.messages['in-app-about.about'],
-              onClick: handleClickAbout,
+              onClick: () => handleClickAbout(this.messages['about'].replace('{APP_NAME}', EditorPreload.getAboutInfo().appName)),
               icon: 'info'
             },
             {

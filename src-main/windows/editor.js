@@ -6,6 +6,7 @@ const nodeCrypto = require('crypto');
 const {app, dialog, shell} = require('electron');
 const ProjectRunningWindow = require('./project-running-window');
 const PackagerWindow = require('./packager');
+const SettingsWindow = require('./settings');
 const {createAtomicWriteStream, writeFileAtomic} = require('../atomic-write-stream');
 const {translate, updateLocale, getStrings} = require('../l10n');
 const {APP_NAME} = require('../brand');
@@ -539,6 +540,7 @@ class EditorWindow extends ProjectRunningWindow {
 
     this.ipc.on('get-about-info', (event) => {
       event.returnValue = {
+        appName: APP_NAME,
         version: packageJSON.version,
         dist: getDist(),
         electron: process.versions.electron,
