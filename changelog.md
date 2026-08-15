@@ -2,6 +2,10 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.2 (2026-08-15)
+- Update "Custom Extensions Library"
+- Emergency fix some issues: unable to use custom fonts; unable to close settings about "Windows Animations"
+
 # 2.0.1 (2026-08-12)
 - Fix extension libraries(Sharkpool) not working in local.
 - Fix some translation issues.
