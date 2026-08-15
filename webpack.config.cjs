@@ -24,6 +24,28 @@ const base = {
                 }
             },
             {
+                // The novatheai addon (and potentially others) ship .ts/.tsx
+                // sources that are imported from plain JS. Transpile them the
+                // same way scratch-gui does: ts-loader strips types first
+                // (transpileOnly = no type-checking, fast), then babel-loader
+                // handles JSX + downleveling.
+                test: /\.tsx?$/,
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: ['@babel/preset-env', '@babel/preset-react']
+                        }
+                    },
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            transpileOnly: true
+                        }
+                    }
+                ]
+            },
+            {
                 test: /\.(svg|png|wav|gif|jpg|mp3|ttf|woff|woff2|eot|hex)$/,
                 loader: 'file-loader',
                 options: {
