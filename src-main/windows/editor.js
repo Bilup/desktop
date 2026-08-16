@@ -3,7 +3,7 @@ const path = require('path');
 const nodeURL = require('url');
 const zlib = require('zlib');
 const nodeCrypto = require('crypto');
-const {app, dialog, shell} = require('electron');
+const {app, dialog, shell, net} = require('electron');
 const ProjectRunningWindow = require('./project-running-window');
 const PackagerWindow = require('./packager');
 const SettingsWindow = require('./settings');
@@ -606,7 +606,10 @@ class EditorWindow extends ProjectRunningWindow {
         spellchecker: settings.spellchecker,
         exitFullscreenOnEscape: settings.exitFullscreenOnEscape,
         richPresenceAvailable: RichPresence.isAvailable(),
-        richPresence: settings.richPresence
+        richPresence: settings.richPresence,
+        cloudExtensions: settings.cloudExtensions,
+        performanceMode: settings.performanceMode,
+        isOnline: net.isOnline()
       };
     });
 
@@ -646,6 +649,12 @@ class EditorWindow extends ProjectRunningWindow {
           } else {
             RichPresence.disable();
           }
+          break;
+        case 'cloudExtensions':
+          settings.cloudExtensions = value;
+          break;
+        case 'performanceMode':
+          settings.performanceMode = value;
           break;
         default:
           throw new Error(`Unknown desktop setting: ${key}`);

@@ -192,8 +192,14 @@ const brotliCompress = (input) => new Promise((resolve, reject) => {
 /**
  * Directory where files downloaded from the remote fallback are cached so
  * they keep working when the app is offline or the remote is unreachable.
+ *
+ * 每个扩展库协议（tw/mw/ae/bl/sp）都必须有各自独立的运行时缓存目录，
+ * 否则不同扩展库的同名扩展（相对路径相同）会互相覆盖/污染：例如先访问
+ * TurboWarp 的 custom.js 会把内容写入共享目录，之后加载 MistWarp 的同名
+ * custom.js 时会优先命中这份被污染的缓存，导致把 A 库的扩展加载成 B 库的。
+ * @param {string} scheme 使用该缓存目录的协议 scheme 名（如 'tw-extensions'）
  */
-const getRuntimeCacheRoot = () => path.join(app.getPath('userData'), 'sp-extensions');
+const getRuntimeCacheRoot = (scheme) => path.join(app.getPath('userData'), scheme);
 
 /**
  * Whether the remote fallback should be attempted right now. After a failed
@@ -290,11 +296,12 @@ const fetchRemoteWithTimeout = (url, timeoutMs = 10000) => new Promise((resolve)
 
 /**
  * Saves a remote fallback response into the writable runtime cache.
+ * @param {string} scheme The scheme this file belongs to (for cache isolation).
  * @param {string} relativePath
  * @param {Buffer} data
  */
-const writeRuntimeCache = async (relativePath, data) => {
-  const runtimePath = path.join(getRuntimeCacheRoot(), `${relativePath}.br`);
+const writeRuntimeCache = async (scheme, relativePath, data) => {
+  const runtimePath = path.join(getRuntimeCacheRoot(scheme), `${relativePath}.br`);
   const fsPromises = require('fs/promises');
   await fsPromises.mkdir(path.dirname(runtimePath), {recursive: true});
   const compressed = await brotliCompress(data);
@@ -314,7 +321,7 @@ const tryReadLocal = async (metadata, relativePath) => {
   const candidates = [];
   // The writable runtime cache only exists for schemes that use a remote fallback.
   if (metadata.remoteFallback) {
-    candidates.push(path.join(getRuntimeCacheRoot(), `${relativePath}.br`));
+    candidates.push(path.join(getRuntimeCacheRoot(metadata.scheme), `${relativePath}.br`));
   }
   candidates.push(path.join(metadata.root, `${relativePath}.br`));
 
@@ -366,7 +373,7 @@ const tryFetchRemote = async (metadata, relativePath) => {
   try {
     const localData = await tryReadLocal(metadata, relativePath);
     if (!localData || !localData.equals(data)) {
-      await writeRuntimeCache(relativePath, data);
+      await writeRuntimeCache(metadata.scheme, relativePath, data);
     }
   } catch (error) {
     console.warn(`[extensions] Failed to update local cache for ${relativePath}:`, error.message);
@@ -670,6 +677,8 @@ const createLegacyFileProtocolHandler = (metadata) => {
 
 app.whenReady().then(() => {
   for (const [scheme, metadata] of Object.entries(FILE_SCHEMES)) {
+    // 记录 scheme，供运行时缓存目录按扩展库隔离（避免不同库同名扩展互相污染）
+    metadata.scheme = scheme;
     // Electron 22 (used by Windows 7/8/8.1 build) does not support protocol.handle() or new Response()
     if (protocol.handle) {
       protocol.handle(scheme, createModernProtocolHandler(metadata));
