@@ -184,17 +184,6 @@ class Settings {
   set cloudExtensions (cloudExtensions) {
     this.data.cloudExtensions = cloudExtensions;
   }
-
-  /**
-   * 性能提高模式。开启后在应用启动时应用更激进的 Chromium/V8 性能参数，
-   * 例如更高的堆内存上限、解除帧率上限、GPU 栅格化等。默认关闭。
-   */
-  get performanceMode () {
-    return this.data.performanceMode === true;
-  }
-  set performanceMode (performanceMode) {
-    this.data.performanceMode = performanceMode;
-  }
 }
 
 module.exports = new Settings();

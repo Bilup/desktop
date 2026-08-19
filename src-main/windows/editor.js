@@ -608,7 +608,6 @@ class EditorWindow extends ProjectRunningWindow {
         richPresenceAvailable: RichPresence.isAvailable(),
         richPresence: settings.richPresence,
         cloudExtensions: settings.cloudExtensions,
-        performanceMode: settings.performanceMode,
         isOnline: net.isOnline()
       };
     });
@@ -652,9 +651,6 @@ class EditorWindow extends ProjectRunningWindow {
           break;
         case 'cloudExtensions':
           settings.cloudExtensions = value;
-          break;
-        case 'performanceMode':
-          settings.performanceMode = value;
           break;
         default:
           throw new Error(`Unknown desktop setting: ${key}`);

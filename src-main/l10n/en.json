@@ -239,14 +239,6 @@
     "string": "Disabling graphics acceleration significantly reduces performance. Some projects can run over 100x slower as all rendering will be done by your CPU. This should only be done as a last resort if graphics acceleration is causing crashes.",
     "developer_comment": "Warning that appears in desktop settings when hardware acceleration/graphics acceleration is disabled"
   },
-  "desktop-settings.performance-mode": {
-    "string": "Enable performance mode (requires restart)",
-    "developer_comment": "Desktop settings option to enable aggressive performance optimizations such as a higher memory limit, unlocked frame rate, and GPU rasterization"
-  },
-  "desktop-settings.performance-mode-warning": {
-    "string": "Performance mode applies aggressive optimizations (higher memory limit, unlocked frame rate, GPU rasterization). It may increase CPU/GPU usage and power consumption. Restart the app for changes to take effect.",
-    "developer_comment": "Warning that appears in desktop settings when performance mode is enabled"
-  },
   "desktop-settings.background-throttling": {
     "string": "Sleep hidden windows",
     "developer_comment": "Desktop settings option to disable background window throttling"
