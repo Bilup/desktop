@@ -613,6 +613,8 @@ class EditorWindow extends ProjectRunningWindow {
     });
 
     this.ipc.handle('set-desktop-setting', async (event, key, value) => {
+      // 先写入内存，即使下面的应用逻辑抛错，设置也要保存到磁盘，
+      // 否则用户切换开关后重启会回滚，表现为"设置无法打开/关闭"。
       switch (key) {
         case 'updateChecker':
           settings.updateChecker = value;
@@ -628,26 +630,18 @@ class EditorWindow extends ProjectRunningWindow {
           break;
         case 'backgroundThrottling':
           settings.backgroundThrottling = value;
-          AbstractWindow.settingsChanged();
           break;
         case 'bypassCORS':
           settings.bypassCORS = value;
           break;
         case 'spellchecker':
           settings.spellchecker = value;
-          AbstractWindow.settingsChanged();
           break;
         case 'exitFullscreenOnEscape':
           settings.exitFullscreenOnEscape = value;
           break;
         case 'richPresence':
           settings.richPresence = value;
-          if (value) {
-            RichPresence.enable();
-            this.updateRichPresence();
-          } else {
-            RichPresence.disable();
-          }
           break;
         case 'cloudExtensions':
           settings.cloudExtensions = value;
@@ -655,6 +649,23 @@ class EditorWindow extends ProjectRunningWindow {
         default:
           throw new Error(`Unknown desktop setting: ${key}`);
       }
+
+      // 异步应用设置；失败只记录日志，不影响持久化
+      try {
+        if (key === 'backgroundThrottling' || key === 'spellchecker') {
+          AbstractWindow.settingsChanged();
+        } else if (key === 'richPresence') {
+          if (value) {
+            RichPresence.enable();
+            this.updateRichPresence();
+          } else {
+            RichPresence.disable();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to apply desktop setting:', key, error);
+      }
+
       await settings.save();
     });
 
@@ -682,6 +693,11 @@ class EditorWindow extends ProjectRunningWindow {
   }
 
   applySettings () {
+    // 窗口可能正在销毁（closed 事件触发前 webContents 已销毁），
+    // 调用 setBackgroundThrottling 会抛错，导致 settingsChanged() 中断。
+    if (this.window.isDestroyed()) {
+      return;
+    }
     this.window.webContents.setBackgroundThrottling(settings.backgroundThrottling);
   }
 
