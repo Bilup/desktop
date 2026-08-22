@@ -2,6 +2,12 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.3 (2026-08-22)
+- Fix an issue: unable to adjust local settings
+- Fix an issue about sandbox
+- Add "Global custom block"
+- Update the style of sprite/costume/background/sound selection
+
 # 2.0.2 (2026-08-15)
 - Update "Custom Extensions Library"
 - Emergency fix some issues: unable to use custom fonts; unable to close settings about "Windows Animations"

@@ -1,10 +1,19 @@
 [
   {
+    "version": "2.0.3",
+    "date": "2026-08-22",
+    "notes": [
+      "Fix an issue: unable to adjust local settings",
+      "Fix an issue about sandbox",
+      "Add \"Global custom block\"",
+      "Update the style of sprite/costume/background/sound selection"
+    ]
+  },
+  {
     "version": "2.0.2",
     "date": "2026-08-15",
     "notes": [
       "Update \"Custom Extensions Library\"",
-      "Fix some known issues",
       "Emergency fix some issues: unable to use custom fonts; unable to close settings about \"Windows Animations\""
     ]
   },
