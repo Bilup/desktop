@@ -232,6 +232,17 @@ const toRemoteFallbackURL = (baseURL, relativePath) => {
 };
 
 /**
+ * 云端回退请求的超时时间（毫秒）。
+ *
+ * 这个值必须明显小于渲染进程侧各自的 fetch 超时（扩展画廊 fetchLibrary
+ * 使用 10s AbortController）。否则云端挂起时（连接被黑洞、代理超时、DNS
+ * 卡住等），协议层要等满 10s 才放弃云端并回退本地缓存，而渲染进程在
+ * 10s 时已先一步 abort 请求——本地缓存响应到达时已被丢弃，表现为
+ * "云端加载失败但本地缓存没有加载"。
+ */
+const REMOTE_FETCH_TIMEOUT_MS = 5000;
+
+/**
  * Fetch a single file from the remote fallback with a timeout.
  *
  * This promise is guaranteed to settle (with Buffer or null) no matter what
@@ -243,7 +254,7 @@ const toRemoteFallbackURL = (baseURL, relativePath) => {
  * @param {number} timeoutMs
  * @returns {Promise<Buffer|null>}
  */
-const fetchRemoteWithTimeout = (url, timeoutMs = 10000) => new Promise((resolve) => {
+const fetchRemoteWithTimeout = (url, timeoutMs = REMOTE_FETCH_TIMEOUT_MS) => new Promise((resolve) => {
   let parsedURL;
   try {
     parsedURL = new URL(url);
