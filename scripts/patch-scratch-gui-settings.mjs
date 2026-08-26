@@ -54,7 +54,7 @@ patchFile(
   [{
     test: (c) => /try\s*\{[\s\S]*?await request\(`\/theme\?uuid=[\s\S]*?setSelected\(null\);\s*await refresh\(\);\s*\}\);/m.test(c),
     apply: (c) => c.replace(
-      /(try\s*\{[\s\S]*?await request\(`\/theme\?uuid=[\s\S]*?setSelected\(null\);\s*await refresh\(\);\s*)\)};/m,
+      /(try\s*\{[\s\S]*?await request\(`\/theme\?uuid=[\s\S]*?setSelected\(null\);\s*await refresh\(\);\s*)\}\);/m,
       '$1} catch (err) {\n            setDeleteError(err.message || \'Failed to delete theme\');\n        } finally {\n            releaseDelete();\n            setBusy(false);\n        }'
     )
   }]
