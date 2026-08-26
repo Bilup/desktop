@@ -1,39 +1,61 @@
 import fs from 'node:fs';
 import pathUtil from 'node:path';
 
-const SETTINGS_PATH = pathUtil.join(
-  import.meta.dirname, '..',
-  'node_modules', 'scratch-gui', 'src', 'community', 'pages', 'Settings.jsx'
+const ROOT = pathUtil.join(import.meta.dirname, '..');
+
+const patchFile = (relativePath, label, patches) => {
+  const fullPath = pathUtil.join(ROOT, relativePath);
+  let content;
+  try {
+    content = fs.readFileSync(fullPath, 'utf-8');
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.log(`[patch] ${label} not found, skipping`);
+      return;
+    }
+    throw err;
+  }
+
+  let patched = content;
+  for (const {test, apply} of patches) {
+    if (!test(patched)) {
+      console.log(`[patch] ${label}: no matching pattern found, skipping`);
+      continue;
+    }
+    patched = apply(patched);
+  }
+
+  if (patched === content) {
+    console.log(`[patch] ${label}: no changes needed`);
+    return;
+  }
+
+  fs.writeFileSync(fullPath, patched, 'utf-8');
+  console.log(`[patch] ${label}: patched successfully`);
+};
+
+// Patch 1: Settings.jsx - remove undefined `settingsSection` from named export
+patchFile(
+  'node_modules/scratch-gui/src/community/pages/Settings.jsx',
+  'Settings.jsx',
+  [{
+    test: (c) => /export\s*\{[^}]*settingsSection[^}]*\};?\s*$/m.test(c),
+    apply: (c) => c.replace(
+      /export\s*\{[^}]*settingsSection[^}]*\};?\s*$/m,
+      (match) => match.replace(/\s*settingsSection\s*,?\s*/g, '')
+    )
+  }]
 );
 
-try {
-  const content = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-
-  // Match the export line that includes the undefined `settingsSection`
-  const original = /export\s*\{[^}]*settingsSection[^}]*\};?\s*$/m;
-  if (!original.test(content)) {
-    console.log('[patch] Settings.jsx does not need patching');
-    process.exit(0);
-  }
-
-  const patched = content.replace(original, (match) => {
-    // Remove `settingsSection` (and the trailing comma if present) from the export
-    return match.replace(/\s*settingsSection\s*,?\s*/g, '');
-  });
-
-  // Verify the patch didn't produce an empty export `{}` or `{, ...}`
-  if (/export\s*\{\s*,?\s*\};?\s*$/.test(patched) || /export\s*\{\s*,\s*/.test(patched)) {
-    console.error('[patch] Patching would result in broken export syntax, aborting');
-    process.exit(1);
-  }
-
-  fs.writeFileSync(SETTINGS_PATH, patched, 'utf-8');
-  console.log('[patch] Removed undefined `settingsSection` from Settings.jsx exports');
-} catch (err) {
-  if (err.code === 'ENOENT') {
-    console.log('[patch] Settings.jsx not found, skipping');
-    process.exit(0);
-  }
-  console.error('[patch] Failed to patch Settings.jsx:', err.message);
-  process.exit(1);
-}
+// Patch 2: WarpThemePanel.jsx - fix `try` without `catch`/`finally` in confirmDeleteTheme
+patchFile(
+  'node_modules/scratch-gui/src/community/components/WarpThemePanel.jsx',
+  'WarpThemePanel.jsx',
+  [{
+    test: (c) => /try\s*\{[\s\S]*?await request\(`\/theme\?uuid=[\s\S]*?setSelected\(null\);\s*await refresh\(\);\s*\}\);/m.test(c),
+    apply: (c) => c.replace(
+      /(try\s*\{[\s\S]*?await request\(`\/theme\?uuid=[\s\S]*?setSelected\(null\);\s*await refresh\(\);\s*)\)};/m,
+      '$1} catch (err) {\n            setDeleteError(err.message || \'Failed to delete theme\');\n        } finally {\n            releaseDelete();\n            setBusy(false);\n        }'
+    )
+  }]
+);
