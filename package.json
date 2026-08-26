@@ -9,7 +9,7 @@
   },
   "type": "commonjs",
   "scripts": {
-    "fetch": "node scripts/download-library-files.mjs && node scripts/download-packager.mjs && node scripts/prepare-extensions.mjs && node scripts/prepare-bilup-extensions.mjs && node scripts/prepare-mw-extensions.mjs && node scripts/prepare-sp-extensions.mjs",
+    "fetch": "node scripts/patch-scratch-gui-settings.mjs && node scripts/download-library-files.mjs && node scripts/download-packager.mjs && node scripts/prepare-extensions.mjs && node scripts/prepare-bilup-extensions.mjs && node scripts/prepare-mw-extensions.mjs && node scripts/prepare-sp-extensions.mjs",
     "webpack:compile": "webpack",
     "webpack:watch": "webpack --watch",
     "webpack:prod": "cross-env NODE_ENV=production webpack",
