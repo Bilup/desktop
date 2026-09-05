@@ -138,8 +138,12 @@ module.exports = [
             new DefinePlugin({
                 'process.env.ROOT': '""'
             }),
+            // scratch-gui/src/lib/git/sync-remotes.js imports ../rotur/git-api.js
+            // which does not exist in the Bilup/scratch-gui#develop-builds package.
+            // Use NormalModuleReplacementPlugin to intercept the relative import
+            // at the beforeResolve stage (before resolution fails).
             new NormalModuleReplacementPlugin(
-                /scratch-gui[\\/]src[\\/]lib[\\/]rotur[\\/]git-api\.js$/,
+                /\.\.\/rotur\/git-api\.js$/,
                 path.resolve(__dirname, 'src-renderer-webpack/editor/gui/rotur-git-api.js')
             ),
             new CopyWebpackPlugin({
