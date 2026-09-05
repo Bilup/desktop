@@ -177,6 +177,10 @@ module.exports = [
                 // for its gzip/gunzip commands. Provide a stub that reports
                 // compression as unavailable in the browser terminal.
                 'node:zlib$': path.resolve(__dirname, 'src-renderer-webpack/editor/gui/just-bash-zlib.js'),
+                // scratch-gui/src/lib/git/sync-remotes.js imports ../rotur/git-api.js
+                // but that file does not exist in the Bilup/scratch-gui#develop-builds package.
+                // Provide a stub that disables rotur-specific git features in desktop.
+                'scratch-gui/src/lib/rotur/git-api$': path.resolve(__dirname, 'src-renderer-webpack/editor/gui/rotur-git-api.js'),
             }
         }
     },
