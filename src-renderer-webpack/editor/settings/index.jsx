@@ -10,6 +10,9 @@ import IntlBridge from 'scratch-gui/src/lib/tw-use-intl.jsx';
 import {detectLocale} from 'scratch-gui/src/lib/utils/detect-locale.js';
 import {UserProvider} from 'scratch-gui/src/community/UserContext.jsx';
 import Settings from 'scratch-gui/src/community/pages/Settings.jsx';
+import ErrorContainerHOC from '../error/error-container-hoc.jsx';
+
+const SafeSettings = ErrorContainerHOC(Settings);
 
 // Community design tokens are global CSS; they must not be processed as CSS modules.
 import '!!style-loader!css-loader!scratch-gui/src/community/styles/tokens.css';
@@ -35,7 +38,7 @@ ReactDOM.render(
   <IntlProvider locale={locale} messages={editorMessages[locale]}>
     <IntlBridge>
       <UserProvider>
-        <Settings isScratchDesktop={true} />
+        <SafeSettings isScratchDesktop={true} />
       </UserProvider>
     </IntlBridge>
   </IntlProvider>,

@@ -30,6 +30,7 @@
     "@turbowarp/extensions": "github:TurboWarp/extensions#master",
     "@turbowarp/scratch-svg-renderer": "^1.1.0",
     "@bilup/extensions": "github:Bilup/extensions#main",
+    "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#develop-builds",
     "jszip": "^3.10.1",
     "adm-zip": "^0.5.16",
     "autoprefixer": "^9.8.8",

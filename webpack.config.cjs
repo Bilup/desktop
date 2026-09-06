@@ -179,6 +179,16 @@ module.exports = [
         resolve: {
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
             symlinks: false,
+            // 兜底依赖查找:scratch-gui 作为 git 依赖安装时,若其嵌套依赖未被
+            // hoist 到顶层(npm 经典布局),desktop 自己的入口文件(addons/
+            // settings 的 index.jsx 等)import react-intl / @bilup/scratch-l10n
+            // 等裸模块会解析失败,导致该入口编译失败、产物缺失(表现为
+            // tw-editor:// 页面 404)。把 scratch-gui 的 node_modules 加入候选,
+            // hoist 布局下该目录不存在也不影响顶层查找。
+            modules: [
+                path.resolve(__dirname, 'node_modules/scratch-gui/node_modules'),
+                'node_modules'
+            ],
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
                 'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
@@ -207,6 +217,10 @@ module.exports = [
         resolve: {
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
             symlinks: false,
+            modules: [
+                path.resolve(__dirname, 'node_modules/scratch-gui/node_modules'),
+                'node_modules'
+            ],
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
                 'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
@@ -234,6 +248,10 @@ module.exports = [
         resolve: {
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
             symlinks: false,
+            modules: [
+                path.resolve(__dirname, 'node_modules/scratch-gui/node_modules'),
+                'node_modules'
+            ],
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
                 'react-dom': path.resolve(__dirname, 'node_modules/react-dom')

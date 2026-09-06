@@ -47,24 +47,7 @@ patchFile(
   }]
 );
 
-// Patch 2: Create rotur/git-api.js stub for sync-remotes.js
-const roturDir = pathUtil.join(ROOT, 'node_modules/scratch-gui/src/lib/rotur');
-const roturStub = pathUtil.join(roturDir, 'git-api.js');
-if (!fs.existsSync(roturStub)) {
-  if (!fs.existsSync(roturDir)) {
-    fs.mkdirSync(roturDir, {recursive: true});
-  }
-  fs.writeFileSync(roturStub, `// Stub created by patch-scratch-gui-settings.mjs
-// Referenced by ../git/sync-remotes.js but missing from the develop-builds package.
-export const getAuth = () => null;
-export const isRoturGitUrl = () => false;
-`, 'utf-8');
-  console.log('[patch] rotur/git-api.js: created stub');
-} else {
-  console.log('[patch] rotur/git-api.js: already exists');
-}
-
-// Patch 3: WarpThemePanel.jsx - fix `try` without `catch`/`finally` in confirmDeleteTheme
+// Patch 2: WarpThemePanel.jsx - fix `try` without `catch`/`finally` in confirmDeleteTheme
 patchFile(
   'node_modules/scratch-gui/src/community/components/WarpThemePanel.jsx',
   'WarpThemePanel.jsx',

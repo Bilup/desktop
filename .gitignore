@@ -33,3 +33,6 @@ development.provisionprofile
 
 #Prevent anyone upload GitHub Actions Files here
 download/
+
+.workbuddy
+.trae
