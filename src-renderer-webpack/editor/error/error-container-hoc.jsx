@@ -7,7 +7,8 @@ const ErrorContainerHOC = function (WrappedComponent) {
 
       this.state = {
         hasError: false,
-        error: null
+        error: null,
+        componentStack: null
       };
     }
 
@@ -18,11 +19,24 @@ const ErrorContainerHOC = function (WrappedComponent) {
       };
     }
 
+    componentDidCatch(error, info) {
+      // Keep the raw error reachable in DevTools and surface the React
+      // component tree so production builds can still be debugged without
+      // minified function names.
+      console.error('Bilup desktop render error:', error, info);
+      this.setState({
+        componentStack: (info && info.componentStack) || null
+      });
+    }
+
     render() {
       if (this.state.hasError) {
         let debugInformation = '';
         debugInformation += `Message: ${this.state.error}\n\n`;
         debugInformation += `Stack: ${this.state.error?.stack}\n\n`;
+        if (this.state.componentStack) {
+          debugInformation += `Component tree:\n${this.state.componentStack}\n\n`;
+        }
         debugInformation += `URL: ${location.href}\n\n`;
         debugInformation += `User-Agent: ${navigator.userAgent}`;
 
