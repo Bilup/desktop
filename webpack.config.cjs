@@ -146,6 +146,14 @@ module.exports = [
                 /\.\.\/rotur\/git-api\.js$/,
                 path.resolve(__dirname, 'src-renderer-webpack/editor/gui/rotur-git-api.js')
             ),
+            // scratch-gui/src/lib/components/project-fetcher-hoc.jsx and
+            // sb-file-uploader-hoc.jsx import ../git/project-history.js which
+            // may not be present in the installed version of scratch-gui.
+            // Provide a stub to avoid ReferenceError at runtime.
+            new NormalModuleReplacementPlugin(
+                /\.\.\/git\/project-history\.js$/,
+                path.resolve(__dirname, 'src-renderer-webpack/editor/gui/project-history.js')
+            ),
             new CopyWebpackPlugin({
                 patterns: [
                     {
