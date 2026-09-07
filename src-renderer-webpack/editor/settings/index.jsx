@@ -1,6 +1,7 @@
 import {addLocaleData, IntlProvider} from 'react-intl';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {MemoryRouter} from 'react-router-dom';
 
 import {localeData} from '@bilup/scratch-l10n';
 import editorMessages from '@bilup/scratch-l10n/locales/editor-msgs';
@@ -36,11 +37,19 @@ document.body.classList.add('tw-loaded');
 
 ReactDOM.render(
   <IntlProvider locale={locale} messages={editorMessages[locale]}>
-    <IntlBridge>
-      <UserProvider>
-        <SafeSettings isScratchDesktop={true} />
-      </UserProvider>
-    </IntlBridge>
+    {/*
+      Settings 页面来自 gui 社区站,内部会使用 react-router 的
+      useSearchParams/useLocation(在网站里它运行在 Router 内)。桌面端是
+      独立渲染的裸页面,这里补一个 MemoryRouter,否则会触发
+      invariant 抛错导致整页白屏。
+    */}
+    <MemoryRouter initialEntries={['/settings']}>
+      <IntlBridge>
+        <UserProvider>
+          <SafeSettings isScratchDesktop={true} />
+        </UserProvider>
+      </IntlBridge>
+    </MemoryRouter>
   </IntlProvider>,
   appTarget
 );
