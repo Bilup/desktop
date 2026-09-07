@@ -192,6 +192,12 @@ module.exports = [
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
                 'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+                // 设置窗口渲染 gui 社区 Settings 页,依赖 react-router 的
+                // useSearchParams/useLocation。若 desktop(顶层)与 gui 各自
+                // 解析到不同的 react-router 物理副本,context 不互通会表现成
+                // "Router 外调用"并抛错,因此强制全部指向顶层单一实例。
+                'react-router$': path.resolve(__dirname, 'node_modules/react-router'),
+                'react-router-dom$': path.resolve(__dirname, 'node_modules/react-router-dom'),
                 'scratch-gui$': path.resolve(__dirname, 'node_modules/scratch-gui/src/index.js'),
                 'scratch-render-fonts$': path.resolve(__dirname, 'node_modules/scratch-gui/src/lib/tw-scratch-render-fonts'),
                 // webpack 4 ignores the "exports" field and resolves just-bash
@@ -223,7 +229,9 @@ module.exports = [
             ],
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
-                'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+                'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+                'react-router$': path.resolve(__dirname, 'node_modules/react-router'),
+                'react-router-dom$': path.resolve(__dirname, 'node_modules/react-router-dom')
             }
         },
         plugins: [
@@ -254,7 +262,9 @@ module.exports = [
             ],
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
-                'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+                'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+                'react-router$': path.resolve(__dirname, 'node_modules/react-router'),
+                'react-router-dom$': path.resolve(__dirname, 'node_modules/react-router-dom')
             }
         },
         plugins: [

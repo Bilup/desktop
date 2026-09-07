@@ -31,6 +31,7 @@
     "@turbowarp/scratch-svg-renderer": "^1.1.0",
     "@bilup/extensions": "github:Bilup/extensions#main",
     "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#develop-builds",
+    "react-router": "^6.30.4",
     "react-router-dom": "^6.30.4",
     "jszip": "^3.10.1",
     "adm-zip": "^0.5.16",
