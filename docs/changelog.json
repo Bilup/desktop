@@ -1,5 +1,14 @@
 [
   {
+    "version": "2.0.4",
+    "date": "2026-09-07",
+    "notes": [
+      "Add 'Frosted Glass Theme'",
+      "Fix some issues about theme",
+      "Delete Addons \"novatheai\""
+    ]
+  },
+  {
     "version": "2.0.3",
     "date": "2026-08-22",
     "notes": [

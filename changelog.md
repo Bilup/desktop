@@ -2,6 +2,11 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.4 (2026-09-07)
+- Add 'Frosted Glass Theme'
+- Fix some issues about theme
+- Delete Addons "novatheai"
+
 # 2.0.3 (2026-08-22)
 - Fix an issue: unable to adjust local settings
 - Fix an issue about sandbox
