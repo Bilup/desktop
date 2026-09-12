@@ -80,8 +80,8 @@ patchFile(
   [{
     test: (c) => !/import\s*\{[^}]*getProjectHistoryState[^}]*\}\s*from/.test(c) && /getProjectHistoryState\(\)/.test(c),
     apply: (c) => c.replace(
-      /^(import\s+.*(?:\n|\r\n?))/,
-      (firstImport) => firstImport + "import {getProjectHistoryState} from '../../lib/git/project-history.js';\n"
+      /^(import\s+)/m,
+      "import {getProjectHistoryState} from '../../lib/git/project-history.js';\n$1"
     )
   }]
 );
