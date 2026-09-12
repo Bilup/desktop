@@ -59,3 +59,29 @@ patchFile(
     )
   }]
 );
+
+// Patch 3: toast-notification.jsx - add `sequence` to props destructuring
+patchFile(
+  'node_modules/scratch-gui/src/components/toast-notification/toast-notification.jsx',
+  'toast-notification.jsx',
+  [{
+    test: (c) => /const\s*\{\s*message\s*,\s*type\s*=\s*'info'\s*,\s*position\s*=\s*'top-right'\s*,\s*visible\s*,\s*onClose\s*\}\s*=\s*props/.test(c),
+    apply: (c) => c.replace(
+      /const\s*\{\s*message\s*,\s*type\s*=\s*'info'\s*,\s*position\s*=\s*'top-right'\s*,\s*visible\s*,\s*onClose\s*\}\s*=\s*props/,
+      "const {message, type = 'info', position = 'top-right', visible, onClose, sequence} = props"
+    )
+  }]
+);
+
+// Patch 4: menu-bar.jsx - add missing import for getProjectHistoryState
+patchFile(
+  'node_modules/scratch-gui/src/components/menu-bar/menu-bar.jsx',
+  'menu-bar.jsx',
+  [{
+    test: (c) => !/import\s*\{[^}]*getProjectHistoryState[^}]*\}\s*from/.test(c) && /getProjectHistoryState\(\)/.test(c),
+    apply: (c) => c.replace(
+      /^(import\s+.*(?:\n|\r\n?))/,
+      (firstImport) => firstImport + "import {getProjectHistoryState} from '../../lib/git/project-history.js';\n"
+    )
+  }]
+);
