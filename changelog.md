@@ -1,6 +1,10 @@
 This document is the authoritative source for TurboWarp's changelogs. Everything else gets generated from this list by `node scripts/generate-changelogs.mjs`.
 
-Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
+Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/)..
+
+# 2.0.5 (2026-09-13)
+- Emergency fix for a critical issue: the variable display isn't changing.
+- Fix some translations issues
 
 # 2.0.4 (2026-09-07)
 - Add 'Frosted Glass Theme'
