@@ -2,6 +2,14 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/)..
 
+# 2.0.6 (2026-09-15)
+- Fix an issue: the stage stopped repainting when the window was covered by another window.
+- On PCs with two graphics processors, prefer the high performance one.
+- Faster startup: the editor's compiled code is now cached between launches.
+- Extensions and library assets are served from the local cache right away instead of waiting on the network first.
+- Having background throttling turned off now fully takes effect.
+- Smoother motion: each step of the project is drawn exactly once, so frame spacing no longer jitters.
+
 # 2.0.5 (2026-09-13)
 - Emergency fix for a critical issue: the variable display isn't changing.
 - Fix some translations issues

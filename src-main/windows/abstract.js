@@ -178,7 +178,14 @@ class AbstractWindow {
     options.webPreferences = {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true
+      sandbox: true,
+      // 必须在创建窗口时就下发，不能只靠运行时调用
+      // webContents.setBackgroundThrottling()：
+      // 按 Electron 文档，webPreferences.backgroundThrottling 才会同时影响
+      // Page Visibility API；运行时改这个值只会改变动画/定时器节流。
+      // 用户把"后台节流"关掉时，希望的是窗口就算被挡住/切到后台也照常按
+      // 正常帧率跑（例如挂机跑项目），只设置一半是达不到效果的。
+      backgroundThrottling: settings.backgroundThrottling
     };
 
     const preloadName = this.getPreload();

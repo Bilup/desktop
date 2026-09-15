@@ -24,18 +24,83 @@ app.enableSandbox();
 // https://github.com/LLK/scratch-desktop/blob/4b462212a8e406b15bcf549f8523645602b46064/src/main/index.js#L45
 app.commandLine.appendSwitch('host-resolver-rules', 'MAP device-manager.scratch.mit.edu 127.0.0.1');
 
-if (!settings.hardwareAcceleration) {
-  app.disableHardwareAcceleration();
+/**
+ * 合并式追加 --enable-features / --disable-features。
+ *
+ * Chromium 解析重复出现的同一个 switch 时只取第一次见到的值，直接连着调用
+ * 两次 appendSwitch 会让后一次被静默丢弃。所以这里先读出已有的值再拼接。
+ * @param {string} switchName 'enable-features' 或 'disable-features'
+ * @param {string} features 逗号分隔的 feature 名
+ */
+const appendFeatures = (switchName, features) => {
+  const existing = app.commandLine.getSwitchValue(switchName);
+  app.commandLine.appendSwitch(switchName, existing ? `${existing},${features}` : features);
+};
 
-  // SwiftShader is Chromium's software WebGL fallback. Starting in Chrome 139,
-  // it is disabled by default. Enabling SwiftShader is required for the editor
-  // to work without hardware acceleration, so adding this flag will be
-  // required. Google considers this dangerous, so only add the flag when it is
-  // needed.
-  // https://github.com/TurboWarp/desktop/issues/1158
-  // https://chromestatus.com/feature/5166674414927872
-  // https://chromium.googlesource.com/chromium/src/+/main/docs/gpu/swiftshader.md
-  app.commandLine.appendSwitch('enable-unsafe-swiftshader');
+// Windows 上 Chromium 会用系统报告的窗口遮挡状态来决定还要不要给这个窗口发
+// requestAnimationFrame。这个判定经常出错：窗口只被别的窗口盖住一部分、
+// 有置顶小工具浮在上面、切虚拟桌面、多显示器热插拔，都可能被误判成"完全被
+// 遮挡"。一旦判错，舞台的 rAF 循环直接停摆 —— 项目逻辑照常在跑，画面却不再
+// 刷新，表现就是"窗口一被挡住就卡住/掉帧"。
+// 网页端很难踩到，因为浏览器标签页有自己一套可见性判定；桌面端窗口长期和
+// IDE、浏览器并排使用，正是这个误判的高发场景。
+// 关掉遮挡计算只影响"要不要继续绘制"，真正的后台节流仍然由
+// settings.backgroundThrottling 和下面的 disable-* 开关控制。
+// https://github.com/electron/electron/issues/27214
+appendFeatures('disable-features', 'CalculateNativeWinOcclusion');
+
+// SwiftShader is Chromium's software WebGL fallback. Starting in Chrome 139,
+// it is disabled by default. Enabling SwiftShader is required for the editor
+// to work without hardware acceleration, so adding this flag will be
+// required. Google considers this dangerous, so only add the flag when it is
+// needed.
+// https://github.com/TurboWarp/desktop/issues/1158
+// https://chromestatus.com/feature/5166674414927872
+// https://chromium.googlesource.com/chromium/src/+/main/docs/gpu/swiftshader.md
+//
+// 注意：这个开关必须无条件打开，不能只在 "用户关掉硬件加速" 时才打开。
+// 如果显卡被 Chromium 的驱动黑名单拦掉（integrated GPU + 旧驱动很常见），
+// 即使 settings.hardwareAcceleration 为 true，WebGL 也只能回退到软件渲染；
+// 而在 Chrome 139+ 上这个软件兜底默认是关闭的，结果是 WebGL 直接创建失败或
+// 走 CPU 路径，Scratch 渲染器会慢 1~2 个数量级 —— 这正是桌面端比网页端慢的
+// 头号原因之一。网页端用户往往已经升级过 Chrome/驱动，桌面端只能靠这个开关
+// 兜底。
+app.commandLine.appendSwitch('enable-unsafe-swiftshader');
+
+if (settings.hardwareAcceleration) {
+  // 忽略 Chromium 的 GPU 黑名单。被列黑名单的机器在网页端会静默降级成软件
+  // 光栅化（积木区、舞台、代码编辑器全部由 CPU 画），这是桌面端比网页端还慢
+  // 的第二个来源。强制启用硬件加速后 WebGL 与合成才真正跑在 GPU 上。
+  // 如果个别机器因为驱动原因崩溃，用户仍可在设置里关闭图形加速回退。
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+
+  // 编辑器 UI 是重 DOM 场景（积木工作区 + 面板），这两个开关让页面合成走
+  // GPU 光栅化、帧数据零拷贝上传，避免每帧多一次 GPU->CPU->GPU 往返。
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+
+  // 双显卡笔记本（核显 + 独显）上 Chromium 有可能把窗口交给核显渲染，
+  // WebGL 于是跑在性能弱得多的集显上，帧率会平白掉一档，而且是"稳定地慢"
+  // 而不是偶发卡顿。这个开关明确要求使用高性能 GPU。
+  // 官方开关名见 https://www.electronjs.org/docs/latest/api/command-line-switches
+  app.commandLine.appendSwitch('force_high_performance_gpu');
+} else {
+  app.disableHardwareAcceleration();
+}
+
+// 用户关闭后台节流时，光靠 webContents.setBackgroundThrottling(false) 只能解除
+// "窗口不可见" 这一种节流；Chromium 还会在窗口被遮挡时降低该 renderer 的优先级、
+// 停掉它的绘制，并把后台定时器统一降频。这几个开关只能在启动时通过命令行传入，
+// 因此这里按设置预置（设置里改完需要重启才彻底生效）。
+// 默认不打开，避免最小化时白耗 CPU。
+if (!settings.backgroundThrottling) {
+  app.commandLine.appendSwitch('disable-renderer-backgrounding');
+  app.commandLine.appendSwitch('disable-background-timer-throttling');
+
+  // 上面两个管的是"进程被降级"和"定时器被降频"，但 Chromium 还会单独在窗口
+  // 被遮挡时把它的绘制优先级压下去。这里一并关掉，保证关掉后台节流的用户拿到
+  // 的是完整的效果（三件套缺一个都还能被观察到卡顿）。
+  app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 }
 
 app.on('session-created', (session) => {

@@ -19,6 +19,19 @@ const base = {
             {
                 test: /\.m?jsx?$/,
                 loader: 'babel-loader',
+                // 注意：这里刻意没有 exclude: /node_modules/，也没有 include 白名单。
+                //
+                // webpack 4.47 的解析器是 acorn 6.4.2，不认识 ES2020 语法（?. / ?? /
+                // ||= / 类字段）。而 node_modules 里 just-bash、isomorphic-git、
+                // @xterm、monaco-editor 等包大量使用这些语法，它们必须先经过 babel
+                // 降级，webpack 才能解析。加 exclude 会让构建直接报
+                // "Module parse failed"，这也是 .browserslistrc 里的目标不能抬高的
+                // 同一个原因。
+                //
+                // 代价是 node_modules 里每个包都会被 babel 处理一遍，构建偏慢；要省掉
+                // 这份开销需要先升级到 webpack 5，或者改成维护一份 include 白名单
+                // （scratch-gui 网页端就是白名单方案，但漏掉任何一个含新语法的包都会
+                // 让构建挂掉，收益主要是构建时间而不是运行性能）。
                 options: {
                     presets: ['@babel/preset-env', '@babel/preset-react']
                 }
@@ -46,9 +59,19 @@ const base = {
                 ]
             },
             {
+                // 与网页端 scratch-gui/webpack.config.js 保持一致：小于 2KB 的
+                // 资源内联成 data URL。
+                //
+                // 改造前用的是 file-loader，等于每个小图标/音效/字体都要走一次
+                // tw-editor:// 协议请求——每次都要主进程读盘再回一次 IPC。打开
+                // 素材库、积木面板（blocks-media 里有大量小图标）时这类请求会
+                // 集中爆发，也是"桌面端比网页端慢"的一部分。网页端用
+                // url-loader limit 2048 把它们直接内联掉，这里对齐。
+                // 超过 limit 的文件仍由 file-loader 落盘（url-loader 会自动回退）。
                 test: /\.(svg|png|wav|gif|jpg|mp3|ttf|woff|woff2|eot|hex)$/,
-                loader: 'file-loader',
+                loader: 'url-loader',
                 options: {
+                    limit: 2048,
                     outputPath: 'static/assets/',
                     esModule: false
                 }
@@ -123,6 +146,49 @@ const base = {
                 ]
             }
         ]
+    },
+    optimization: {
+        // 异步块的拆分策略。
+        //
+        // 改造前这里没有任何 splitChunks 配置，走的是 webpack 4 生产默认值
+        // （chunks: 'async'）。默认值本身能用，问题在别处：just-bash（浏览器包
+        // 1.2MB）、isomorphic-git、lightning-fs、JSZip 原本是被
+        // rotur-session.jsx 静态引进来的，因而算进了初始包——每个用户启动时都
+        // 要下载并解析这几 MB，哪怕从不打开 Fractch 终端或 Git 面板。
+        // 那处静态引用已经切断（见 scratch-gui 的 src/lib/git/shell-user.js），
+        // 它们现在只会落在异步块里。这里显式命名，作用有两个：
+        //   1. Git 面板与终端共用同一份异步块，而不是各自打包一份；
+        //   2. 名字固定 + contenthash，排查和命中 code cache 都更可控。
+        //
+        // chunks 刻意保持 'async'：初始包不拆分，这样 HTML 里仍然只需要一个
+        // <script src="index.js">，不必为注入额外的初始块去改
+        // gui.html / addons.html / settings.html（改错了就是编辑器白屏）。
+        splitChunks: {
+            chunks: 'async',
+            minSize: 30000,
+            cacheGroups: {
+                // 只在终端/Git 面板用到的 shell + git 栈
+                gitLibs: {
+                    test: /node_modules[\\/](?:isomorphic-git|@isomorphic-git|lightning-fs|jszip|just-bash)[\\/]/,
+                    name: 'git-libs',
+                    priority: 20,
+                    reuseExistingChunk: true
+                },
+                // 代码编辑器，只有 Fractch 工作区（React.lazy）会用到
+                monacoEditor: {
+                    test: /node_modules[\\/]monaco-editor[\\/]/,
+                    name: 'monaco-editor',
+                    priority: 20,
+                    reuseExistingChunk: true
+                },
+                xterm: {
+                    test: /node_modules[\\/](?:@xterm|xterm)[\\/]/,
+                    name: 'xterm',
+                    priority: 20,
+                    reuseExistingChunk: true
+                }
+            }
+        }
     }
 }
 
@@ -131,7 +197,15 @@ module.exports = [
         ...base,
         output: {
             path: path.resolve(__dirname, 'dist-renderer-webpack/editor/gui'),
-            filename: 'index.js'
+            filename: 'index.js',
+            // 异步块（monaco / xterm / git-libs / 各 React.lazy 面板）按内容命名。
+            // 改造前没有 chunkFilename，用的是默认 [id].js：模块顺序一变，同一个
+            // URL 就可能装不同内容——这会污染 Chromium 里按 URL 索引的 V8 code
+            // cache（见 src-main/protocols.js 的 codeCache 权限）。加上 contenthash
+            // 后 URL 随内容变化，和网页端产物的做法一致。
+            chunkFilename: '[name].[contenthash:8].js',
+            // 必须保持相对路径：块从入口脚本所在目录加载，由 tw-editor:// 协议提供。
+            publicPath: ''
         },
         entry: './src-renderer-webpack/editor/gui/index.jsx',
         plugins: [
@@ -217,7 +291,9 @@ module.exports = [
         ...base,
         output: {
             path: path.resolve(__dirname, 'dist-renderer-webpack/editor/addons'),
-            filename: 'index.js'
+            filename: 'index.js',
+            chunkFilename: '[name].[contenthash:8].js',
+            publicPath: ''
         },
         entry: './src-renderer-webpack/editor/addons/index.jsx',
         resolve: {
@@ -250,7 +326,9 @@ module.exports = [
         ...base,
         output: {
             path: path.resolve(__dirname, 'dist-renderer-webpack/editor/settings'),
-            filename: 'index.js'
+            filename: 'index.js',
+            chunkFilename: '[name].[contenthash:8].js',
+            publicPath: ''
         },
         entry: './src-renderer-webpack/editor/settings/index.jsx',
         resolve: {

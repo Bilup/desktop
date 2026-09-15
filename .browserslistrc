@@ -1,3 +1,25 @@
+# 这些目标比"桌面端实际会跑的环境"低很多（桌面端只跑在自己的 Electron 里：
+# 主发行版是 Electron 39 / Chromium 142，Windows 7/8/8.1 构建是 Electron 22 /
+# Chromium 108），看起来很像是可以直接抬到 chrome >= 108 —— 但不能这么做。
+#
+# 原因：webpack 4.47.0 的 JS 解析器是 acorn 6.4.2，它不认识 ES2020 语法。
+# 实测（acorn.parse(src, {ecmaVersion: 11})）：
+#   'const x = a?.b;'        -> Unexpected token
+#   'const x = a ?? b;'      -> Unexpected token
+#   'let x = 0; x ||= 1;'    -> Unexpected token
+#   'class K { n = 1; }'     -> Unexpected token
+#   'async function f(){}'   -> OK（这个可以保留）
+# 也就是说 ?. / ?? / ||= / 类字段 必须由 babel 先降级掉，否则 webpack 直接把
+# 构建打挂（Module parse failed）。把目标抬上去 = babel 不再降级 = 构建失败。
+#
+# 想真正抬到 Electron 的内核水平，只有先升级到 webpack 5，或者在 babel 里
+# 单独为"语法"再做一次降级。在此之前请保持这些值不动。
+#
+# 同理，webpack.config.cjs 里的 babel-loader **不能**加
+# exclude: /node_modules/：node_modules 里大量包用了 ?. / ??（just-bash、
+# isomorphic-git、@xterm、monaco-editor …），它们必须经过 babel 才能被
+# webpack 4 解析。这也正是 scratch-gui 网页端要维护一份 babel include
+# 白名单、而不是简单 exclude 全部 node_modules 的原因。
 chrome >= 70
 chromeandroid >= 70
 ios >= 12

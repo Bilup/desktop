@@ -159,7 +159,24 @@ protocol.registerSchemesAsPrivileged(Object.entries(FILE_SCHEMES).map(([scheme, 
     secure: !!metadata.secure,
     stream: !!metadata.stream,
     corsEnabled: true,
-    bypassCSP: true
+    bypassCSP: true,
+    // V8 code cache：这是桌面端"冷启动比网页端慢"最直接的开关。
+    //
+    // 网页端的 JS 由 HTTP 提供，Chromium 会把 V8 编译结果落到磁盘
+    // （generated code cache，键为 resource_url + origin_lock），下次启动直接
+    // 反序列化，省掉解析+编译；官方数据是解析编译时间降 20%~40%。编辑器产物
+    // 是几 MB 的 index.js，这一项就是几百毫秒级别。
+    //
+    // 自定义协议默认拿不到这一层，必须在这里显式打开。注意：
+    //   - 官方文档明确"只有 standard 的 scheme 才生效"，所以非 standard 的
+    //     扩展库协议上这个标志是空操作，统一打开只为将来少一处坑。
+    //   - 这条路径**不经过 Chromium 的 HTTP 缓存**（generated code cache 与
+    //     HttpCache 是两套东西），所以给响应加 cache-control / ETag / 304 在这
+    //     里是死代码，别为此改协议实现。
+    //   - 陈旧风险由 V8 自己兜：code cache 头部带 sourceHash，源码变了会被
+    //     直接拒绝并重新编译，不需要按内容给文件改名。
+    // https://www.electronjs.org/docs/latest/api/structures/custom-scheme
+    codeCache: true
   }
 })));
 
@@ -200,6 +217,77 @@ const brotliCompress = (input) => new Promise((resolve, reject) => {
  * @param {string} scheme 使用该缓存目录的协议 scheme 名（如 'tw-extensions'）
  */
 const getRuntimeCacheRoot = (scheme) => path.join(app.getPath('userData'), scheme);
+
+/**
+ * 进程内缓存：key = `${scheme}:${relativePath}`，value = 文件内容 Buffer
+ * （brotli 方案存已解压内容，普通方案存原始字节）。
+ *
+ * 为什么必须有这一层：一个 Scratch 项目里同一个素材（costume/sound 的
+ * md5ext）会被多个角色、多次加载引用，扩展库的同一个 js/json 也会被反复
+ * 拉取。改造前每一次请求都要走一遍 readFile（+ brotliDecompress），而且全部
+ * 发生在 Electron 主进程上 —— 主进程被这些同步化的解压任务占住时，窗口
+ * 消息、IPC、协议响应都会一起变慢，表现就是 "桌面端比网页端卡"。
+ * 网页端有浏览器 HTTP 缓存兜住同一件事，桌面端必须自己兜。
+ *
+ * 编辑器本体的 tw-editor 协议同样走这里：index.js 是几 MB 的文件，每次开窗
+ * （Ctrl+N）和刷新都会重新从 asar 读一遍，缓存后这些读取直接消失。
+ *
+ * 用 Map 的插入顺序实现 LRU：命中后删掉再 set 回去，最老的键在遍历时最先
+ * 出现。总容量有上限，避免大项目把主进程内存吃满。
+ */
+const MEMORY_CACHE_MAX_BYTES = 128 * 1024 * 1024;
+/**
+ * 单个文件超过这个大小就不进内存缓存（避免一个超大素材把缓存挤空）。
+ * 取 32MB 是为了确保生产构建的 index.js（含 scratch-vm/render/blocks 的
+ * 编辑器整包）一定能被缓存住；正常产物在 10MB 上下。
+ */
+const MEMORY_CACHE_MAX_ENTRY_BYTES = 32 * 1024 * 1024;
+/** @type {Map<string, Buffer>} */
+const memoryCache = new Map();
+let memoryCacheBytes = 0;
+
+const memoryCacheKey = (scheme, relativePath) => `${scheme}:${relativePath}`;
+
+/**
+ * @param {string} key
+ * @returns {Buffer|null}
+ */
+const memoryCacheGet = (key) => {
+  const data = memoryCache.get(key);
+  if (!data) {
+    return null;
+  }
+  // 重新插入以刷新 LRU 顺序
+  memoryCache.delete(key);
+  memoryCache.set(key, data);
+  return data;
+};
+
+/**
+ * @param {string} key
+ * @param {Buffer} data
+ */
+const memoryCacheSet = (key, data) => {
+  if (!Buffer.isBuffer(data) || data.length > MEMORY_CACHE_MAX_ENTRY_BYTES) {
+    return;
+  }
+
+  const existing = memoryCache.get(key);
+  if (existing) {
+    memoryCacheBytes -= existing.length;
+    memoryCache.delete(key);
+  }
+
+  memoryCache.set(key, data);
+  memoryCacheBytes += data.length;
+
+  while (memoryCacheBytes > MEMORY_CACHE_MAX_BYTES && memoryCache.size > 1) {
+    const oldestKey = memoryCache.keys().next().value;
+    const oldest = memoryCache.get(oldestKey);
+    memoryCache.delete(oldestKey);
+    memoryCacheBytes -= oldest.length;
+  }
+};
 
 /**
  * Whether the remote fallback should be attempted right now. After a failed
@@ -349,8 +437,8 @@ const tryReadLocal = async (metadata, relativePath) => {
 };
 
 /**
- * Tries the remote fallback first (when enabled); on failure records a
- * cooldown so subsequent requests skip straight to the local cache.
+ * Tries the remote fallback. On failure records a cooldown so subsequent
+ * requests skip straight to the local cache.
  *
  * When the remote responds with content that differs from the local caches,
  * it is written into the writable runtime cache, effectively "overwriting"
@@ -359,9 +447,11 @@ const tryReadLocal = async (metadata, relativePath) => {
  * tryReadLocal() checks first).
  * @param {Metadata} metadata
  * @param {string} relativePath
+ * @param {Buffer|null} [localData] 已经读到的本地内容。传入后可以省掉一次
+ *  readFile + brotliDecompress 的比对读（调用方通常刚拿过这份数据）。
  * @returns {Promise<Buffer|null>}
  */
-const tryFetchRemote = async (metadata, relativePath) => {
+const tryFetchRemote = async (metadata, relativePath, localData = null) => {
   if (!shouldUseRemoteFallback(metadata)) {
     return null;
   }
@@ -382,9 +472,10 @@ const tryFetchRemote = async (metadata, relativePath) => {
   // （写入运行时缓存，读取时优先于打包缓存），保证离线时也是最新版本。
   // 内容一致时跳过写入，避免无谓的磁盘 IO。写入失败不阻断响应。
   try {
-    const localData = await tryReadLocal(metadata, relativePath);
-    if (!localData || !localData.equals(data)) {
+    const baseline = localData || await tryReadLocal(metadata, relativePath);
+    if (!baseline || !baseline.equals(data)) {
       await writeRuntimeCache(metadata.scheme, relativePath, data);
+      console.log(`[extensions] Updated local cache for ${relativePath}`);
     }
   } catch (error) {
     console.warn(`[extensions] Failed to update local cache for ${relativePath}:`, error.message);
@@ -393,27 +484,104 @@ const tryFetchRemote = async (metadata, relativePath) => {
 };
 
 /**
- * Resolves a file for a brotli-cached scheme, trying the remote fallback first
- * (when configured and enabled) and the local caches afterwards.
+ * 正在进行中的后台云端刷新，按 `scheme:relativePath` 去重，避免同一个文件
+ * 在一批并发请求里被重复拉取。
+ * @type {Set<string>}
+ */
+const inflightRemoteRefreshes = new Set();
+
+/**
+ * Stale-while-revalidate：本地缓存已经命中时，立刻把内容交给渲染进程，同时
+ * 在后台悄悄问一次云端有没有新版本。
+ *
+ * 这是桌面端相对网页端能做到 "更快" 的关键点：改造前是 "云端优先"，也就是
+ * 每个扩展文件的响应都要先等一次网络往返；在 extensions.turbowarp.org /
+ * mistium.com / vercel.app 被墙或缓慢的网络下，单次请求最长要挂 5 秒
+ * （REMOTE_FETCH_TIMEOUT_MS）才回退本地，扩展加载、扩展画廊打开都会被拖死。
+ * 改成后台刷新后，云端仍然会更新本地缓存（保留了原来的产品意图），但网络
+ * 彻底离开关键路径。
+ * @param {Metadata} metadata
+ * @param {string} relativePath
+ * @param {string} key 进程内缓存 key
+ * @param {Buffer} localData 当前本地内容
+ */
+const refreshFromRemoteInBackground = (metadata, relativePath, key, localData) => {
+  if (!shouldUseRemoteFallback(metadata) || inflightRemoteRefreshes.has(key)) {
+    return;
+  }
+
+  inflightRemoteRefreshes.add(key);
+  tryFetchRemote(metadata, relativePath, localData)
+    .then((data) => {
+      // 云端有更新：同步刷新进程内缓存，下一次请求立刻用上新版本。
+      if (data) {
+        memoryCacheSet(key, data);
+      }
+    })
+    .catch((error) => {
+      console.warn(`[extensions] Background refresh failed for ${relativePath}:`, error.message);
+    })
+    .finally(() => {
+      inflightRemoteRefreshes.delete(key);
+    });
+};
+
+/**
+ * Resolves a file for a brotli-cached scheme.
+ *
+ * 读取顺序：进程内缓存 -> 本地缓存（运行时缓存优先，其次打包缓存）->
+ * 只有本地完全没有时才同步等云端（例如云端新增、本地包里还没有的扩展文件）。
  * @param {Metadata} metadata
  * @param {string} relativePath
  * @returns {Promise<Buffer>}
  */
 const resolveBrotliData = async (metadata, relativePath) => {
-  let data = null;
+  const key = memoryCacheKey(metadata.scheme, relativePath);
 
-  if (shouldUseRemoteFallback(metadata)) {
-    data = await tryFetchRemote(metadata, relativePath);
+  const cached = memoryCacheGet(key);
+  if (cached) {
+    return cached;
   }
 
-  if (!data) {
-    data = await tryReadLocal(metadata, relativePath);
+  const localData = await tryReadLocal(metadata, relativePath);
+  if (localData) {
+    memoryCacheSet(key, localData);
+    refreshFromRemoteInBackground(metadata, relativePath, key, localData);
+    return localData;
   }
 
-  if (!data) {
-    throw new Error(`Failed to read file: ${relativePath}`);
+  // 本地缓存缺失，只能等云端（有 5s 超时兜底，不会永久挂住）。
+  const remoteData = await tryFetchRemote(metadata, relativePath);
+  if (remoteData) {
+    memoryCacheSet(key, remoteData);
+    return remoteData;
   }
 
+  throw new Error(`Failed to read file: ${relativePath}`);
+};
+
+/**
+ * 读取普通（非 brotli）方案的静态文件，走同一套进程内 LRU。
+ *
+ * 典型对象是 tw-editor 的编辑器产物：index.js 有几 MB，还有 blocks-media 的
+ * 图标、字体等。这些文件之前每次请求都在主进程重新 readFile —— 从 asar 里
+ * 读几 MB 要走一次解包，窗口刚开、正在解析 JS 的时候尤其明显。缓存之后只有
+ * 首次读盘。
+ * @param {Metadata} metadata
+ * @param {string} relativePath 相对 metadata.root 的路径（缓存键的一部分）
+ * @param {string} absolutePath 已经解析并做过越权校验的绝对路径
+ * @returns {Promise<Buffer>}
+ */
+const resolvePlainFileData = async (metadata, relativePath, absolutePath) => {
+  const key = memoryCacheKey(metadata.scheme, relativePath);
+
+  const cached = memoryCacheGet(key);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await require('fs/promises').readFile(absolutePath);
+  memoryCacheSet(key, data);
   return data;
 };
 
@@ -490,7 +658,6 @@ const getBaseProtocolHeaders = metadata => {
 const createModernProtocolHandler = (metadata) => {
   const root = path.join(metadata.root, '/');
   const baseHeaders = getBaseProtocolHeaders(metadata);
-  const fsPromises = require('fs/promises');
 
   /**
    * @param {Request} request
@@ -537,15 +704,16 @@ const createModernProtocolHandler = (metadata) => {
         'content-type': mimeType
       };
 
+      const relativePath = resolved.slice(root.length);
+
       if (metadata.brotli) {
-        const relativePath = resolved.slice(root.length);
         const data = await resolveBrotliData(metadata, relativePath);
         return new Response(data, {
           headers
         });
       }
 
-      const fileData = await fsPromises.readFile(resolved);
+      const fileData = await resolvePlainFileData(metadata, relativePath, resolved);
       return new Response(fileData, {
         headers
       });
