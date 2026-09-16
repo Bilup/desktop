@@ -168,15 +168,22 @@ protocol.registerSchemesAsPrivileged(Object.entries(FILE_SCHEMES).map(([scheme, 
     // 是几 MB 的 index.js，这一项就是几百毫秒级别。
     //
     // 自定义协议默认拿不到这一层，必须在这里显式打开。注意：
-    //   - 官方文档明确"只有 standard 的 scheme 才生效"，所以非 standard 的
-    //     扩展库协议上这个标志是空操作，统一打开只为将来少一处坑。
+    //   - **必须与 standard 联动**。Electron 在注册时如果发现
+    //     `codeCache && !standard` 会直接抛
+    //     "Code cache can only be enabled when the custom scheme is registered
+    //     as standard scheme."，整个主进程起不来（不是静默忽略！）。
+    //     所以这里只能跟随 metadata.standard，不能无条件写 true。
+    //     目前只有 tw-editor / tw-packager 声明了 standard: true，其余（含五个
+    //     扩展库协议）都不是，因此拿不到 code cache —— 想让它们也吃到，前提是把
+    //     scheme 改成 standard，而那会改变 URL 解析语义（相对路径 / host 解析），
+    //     有把扩展加载搞坏的风险，要单独验证后再动。
     //   - 这条路径**不经过 Chromium 的 HTTP 缓存**（generated code cache 与
     //     HttpCache 是两套东西），所以给响应加 cache-control / ETag / 304 在这
     //     里是死代码，别为此改协议实现。
     //   - 陈旧风险由 V8 自己兜：code cache 头部带 sourceHash，源码变了会被
     //     直接拒绝并重新编译，不需要按内容给文件改名。
     // https://www.electronjs.org/docs/latest/api/structures/custom-scheme
-    codeCache: true
+    codeCache: !!metadata.standard
   }
 })));
 
