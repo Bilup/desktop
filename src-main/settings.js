@@ -143,6 +143,21 @@ class Settings {
     this.data.hardwareAcceleration = hardwareAcceleration;
   }
 
+  /**
+   * 是否强制覆盖 Chromium 的 GPU 判断（黑名单 / 光栅化 / 零拷贝 / 首选独显）。
+   *
+   * 默认 false —— 与浏览器行为一致。这几个开关会绕过 Chromium 针对具体驱动做的
+   * 取舍，在它主动排除的配置上可能带来跨显卡拷贝或已知慢路径，表现是周期性掉到
+   * 个位数帧率。只有在确认自己的硬件确实能吃到好处（例如独显笔记本一直落在核显
+   * 上）时才打开；改完需要重启。
+   */
+  get forceGpuFlags () {
+    return this.data.forceGpuFlags === true;
+  }
+  set forceGpuFlags (forceGpuFlags) {
+    this.data.forceGpuFlags = forceGpuFlags;
+  }
+
   get backgroundThrottling () {
     return this.data.backgroundThrottling !== false;
   }

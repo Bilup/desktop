@@ -65,25 +65,32 @@ appendFeatures('disable-features', 'CalculateNativeWinOcclusion');
 // 走 CPU 路径，Scratch 渲染器会慢 1~2 个数量级 —— 这正是桌面端比网页端慢的
 // 头号原因之一。网页端用户往往已经升级过 Chrome/驱动，桌面端只能靠这个开关
 // 兜底。
+// 作用是"保证 WebGL 一定有可用后端"，不是"强制走某条路"：硬件加速不可用时它只是
+// 把软件兜底放回可用状态，Chromium 仍然优先用硬件。所以它是安全的，无条件打开。
 app.commandLine.appendSwitch('enable-unsafe-swiftshader');
 
+// 其余 GPU 开关默认**一律不加**，让 Chromium 按自己的硬件判断走。
+//
+// 为什么反过来：
+//   `ignore-gpu-blocklist` / `enable-gpu-rasterization` / `enable-zero-copy` /
+//   `force_high_performance_gpu` 这四个都是"覆盖 Chromium 判断"的强制开关，而
+//   Chromium 的黑名单与光栅化策略是在具体驱动上实测过才写进去的。被排除的配置
+//   往往不是"慢一点"，而是跨显卡拷贝、驱动已知的慢路径、GPU 进程反复重建 ——
+//   表现正好是**周期性卡到个位数帧率**，而网页端不做任何覆盖，所以反而是稳的。
+//   前几轮无条件打开它们的理由是"黑名单机器会掉到软件渲染"，那是硬件无关的推测，
+//   对多数机器不成立，却给所有机器引入了强制路径的风险。现在以"与浏览器一致"
+//   为默认。
+//
+// 想强制启用（例如确认独显笔记本一直落在核显上），把设置文件里的
+// `forceGpuFlags` 改成 true 再重启：
+//   %APPDATA%/bilup-desktop/settings.json
 if (settings.hardwareAcceleration) {
-  // 忽略 Chromium 的 GPU 黑名单。被列黑名单的机器在网页端会静默降级成软件
-  // 光栅化（积木区、舞台、代码编辑器全部由 CPU 画），这是桌面端比网页端还慢
-  // 的第二个来源。强制启用硬件加速后 WebGL 与合成才真正跑在 GPU 上。
-  // 如果个别机器因为驱动原因崩溃，用户仍可在设置里关闭图形加速回退。
-  app.commandLine.appendSwitch('ignore-gpu-blocklist');
-
-  // 编辑器 UI 是重 DOM 场景（积木工作区 + 面板），这两个开关让页面合成走
-  // GPU 光栅化、帧数据零拷贝上传，避免每帧多一次 GPU->CPU->GPU 往返。
-  app.commandLine.appendSwitch('enable-gpu-rasterization');
-  app.commandLine.appendSwitch('enable-zero-copy');
-
-  // 双显卡笔记本（核显 + 独显）上 Chromium 有可能把窗口交给核显渲染，
-  // WebGL 于是跑在性能弱得多的集显上，帧率会平白掉一档，而且是"稳定地慢"
-  // 而不是偶发卡顿。这个开关明确要求使用高性能 GPU。
-  // 官方开关名见 https://www.electronjs.org/docs/latest/api/command-line-switches
-  app.commandLine.appendSwitch('force_high_performance_gpu');
+  if (settings.forceGpuFlags) {
+    app.commandLine.appendSwitch('ignore-gpu-blocklist');
+    app.commandLine.appendSwitch('enable-gpu-rasterization');
+    app.commandLine.appendSwitch('enable-zero-copy');
+    app.commandLine.appendSwitch('force_high_performance_gpu');
+  }
 } else {
   app.disableHardwareAcceleration();
 }
