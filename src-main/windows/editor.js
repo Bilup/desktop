@@ -19,12 +19,24 @@ const ExtensionDocumentationWindow = require('./extension-documentation.js');
 const AbstractWindow = require('./abstract');
 const {isUpdateCheckerAllowed} = require('../update-checker');
 const {getDist, getPlatform} = require('../platform');
+const diagnostics = require('../diagnostics');
 const packageJSON = require('../../package.json');
 
 const TYPE_FILE = 'file';
 const TYPE_URL = 'url';
 const TYPE_SCRATCH = 'scratch';
 const TYPE_SAMPLE = 'sample';
+
+/**
+ * 交付项目数据之后等这么久，再采一次渲染进程的堆状况。
+ *
+ * 打开项目是渲染进程内存涨得最猛的一次 —— 解压出的素材、解析出的对象图、按需建立的
+ * 皮肤纹理都在这一步翻上去。在这个时刻采样，崩溃记录里"崩之前最后一次看到的用量"
+ * 才有意义，而不是默认空项目的数字。20 秒覆盖常见的项目规模；超大项目会有偏差，
+ * 但重新打开一次会再采一次。
+ * @const {number}
+ */
+const PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS = 20000;
 
 class OpenedFile {
   constructor (type, path) {
@@ -321,6 +333,13 @@ class EditorWindow extends ProjectRunningWindow {
     this.ipc.handle('get-file', async (event, id) => {
       const file = getFileById(id);
       const {name, data} = await file.read();
+
+      // 数据已经交出去，等渲染进程把它解压、解析完再采一次堆状况（只更新内存里的值，
+      // 不写盘；真正写盘发生在崩溃记录里，见 diagnostics.recordCrash）。
+      setTimeout(() => {
+        diagnostics.recordRendererHeap(this.window.webContents);
+      }, PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS);
+
       return {
         name,
         type: file.type,

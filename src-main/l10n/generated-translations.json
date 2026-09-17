@@ -12,6 +12,8 @@
         "context.open-link": "打开链接",
         "context.paste": "粘贴",
         "crash.description": "进程崩溃：{type}：{reason}（{code}）",
+        "crash.recovered.description": "编辑器进程意外退出（原因：{reason}）。窗口已重新加载并重新打开了项目，但崩溃前未保存的改动可能已丢失。",
+        "crash.recovered.title": "编辑器已重新加载",
         "crash.title": "崩溃",
         "data-preview.title": "data：预览",
         "desktop-settings.background-throttling": "休眠后台窗口",

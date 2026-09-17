@@ -37,6 +37,23 @@ const getProtocol = url => {
 const WEB_PROTOCOLS = ['http:', 'https:'];
 
 class ProjectRunningWindow extends AbtractWindow {
+  /**
+   * 渲染进程崩了就把窗口重新加载回来，而不是留下一个再也不会刷新的死窗口。
+   *
+   * 编辑器、运行窗口、数据预览、打包预览都是用户会长时间开着的界面，崩溃之后
+   * 唯一的替代方案是关掉重开 —— 那同样丢未保存的内容，还要重新打开一次文件。
+   * 就地重载之后渲染进程会照常走启动流程，通过 get-initial-file 拿回这个窗口
+   * 当前打开的文件，所以之前打开的项目会自动重新打开。
+   *
+   * 节流与"什么时候放弃自动重载"的逻辑在基类里（见 MAX_AUTO_RELOADS）。
+   *
+   * @param {Electron.RenderProcessGoneDetails} details
+   * @returns {boolean}
+   */
+  handleRendererProcessGone (details) {
+    return this.handleRendererProcessGoneWithReload(details);
+  }
+
   handlePermissionCheck (permission, details) {
     return (
       // Autoplay audio and media device enumeration

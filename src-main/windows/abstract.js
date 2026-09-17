@@ -2,9 +2,33 @@ const { BrowserWindow, screen, session } = require('electron');
 const path = require('path');
 const openExternal = require('../open-external');
 const settings = require('../settings');
+const diagnostics = require('../diagnostics');
+
+/**
+ * 页面加载完成后，等这么久再采样渲染进程的堆状况 —— 要等 React 挂载、默认项目
+ * 加载完，读到的才是稳态值而不是启动瞬间的谷底。
+ * @const {number}
+ */
+const RENDERER_HEAP_SAMPLE_DELAY_MS = 15000;
 
 /** @type {Map<unknown, AbstractWindow[]>} */
 const windowsByClass = new Map();
+
+/**
+ * 统计自动重载次数的时间窗口。
+ * @const {number}
+ */
+const RENDERER_CRASH_WINDOW_MS = 60 * 1000;
+
+/**
+ * 一个统计窗口内允许的自动重载次数，超过就不再自动重载。
+ *
+ * 反复崩溃的原因几乎总是必然复现的：项目里某段数据稳定压垮渲染进程、显卡驱动
+ * 在特定绘制上失败。这种情况下继续自动重载只会变成"崩溃→重载→崩溃"的死循环，
+ * 把 CPU 占满，反而让用户连手动处理的机会都没有。
+ * @const {number}
+ */
+const MAX_AUTO_RELOADS = 2;
 
 /**
  * @typedef AbstractWindowOptions
@@ -21,6 +45,16 @@ class AbstractWindow {
     this.window = options.existingWindow || new BrowserWindow(this.getWindowOptions());
     this.window.webContents.on('before-input-event', this.handleInput.bind(this));
     this.applySettings();
+
+    // 页面加载完延迟采一次渲染进程的 V8 堆状况。`performance.memory` 只在渲染进程里
+    // 有，而它是唯一能直接读出「渲染进程被允许用多少 JS 堆」的地方 —— 用来验证
+    // --js-flags 有没有生效（见 index.js 的 RENDERER_HEAP_LIMIT_MB），也作为崩溃
+    // 记录的基线。窗口已销毁时 recordRendererHeap 会直接返回。
+    this.window.webContents.on('did-finish-load', () => {
+      setTimeout(() => {
+        diagnostics.recordRendererHeap(this.window.webContents);
+      }, RENDERER_HEAP_SAMPLE_DELAY_MS);
+    });
 
     if (!options.existingWindow) {
       // getCursorScreenPoint() segfaults on Linux in Wayland if called before a BrowserWindow is created, so
@@ -46,6 +80,13 @@ class AbstractWindow {
 
     this.initialURL = null;
     this.protocol = null;
+
+    /**
+     * 最近几次渲染进程崩溃的时间戳，用于节制自动重载（见
+     * handleRendererProcessGoneWithReload）。
+     * @type {number[]}
+     */
+    this._rendererCrashTimes = [];
 
     const cls = this.constructor;
     if (!windowsByClass.has(cls)) {
@@ -384,6 +425,47 @@ class AbstractWindow {
   handleRendererProcessGone (details) {
     // to be overridden
     return false;
+  }
+
+  /**
+   * 渲染进程崩溃后的通用恢复：把窗口重新加载回它原本的 URL，并返回 true 表示
+   * 不需要再弹默认提示框。
+   *
+   * 崩溃之后这个窗口的 webContents 已经作废 —— 窗口还留在屏幕上，但再也不会
+   * 刷新、也不响应任何操作，用户唯一的出路是关掉重开；而"关掉重开"一样会丢掉
+   * 未保存的内容，还要重新打开一次文件。就地重载至少把编辑器还回去。
+   *
+   * 短时间内反复崩溃时放弃自动重载并返回 false，交回默认提示框让用户自己决定
+   * （理由见 MAX_AUTO_RELOADS）。无论走哪条路，崩溃本身都已经记进诊断日志。
+   *
+   * @param {Electron.RenderProcessGoneDetails} details
+   * @returns {boolean} true 表示已接管恢复，不再显示默认提示框。
+   */
+  handleRendererProcessGoneWithReload (details) {
+    if (this.initialURL === null) {
+      return false;
+    }
+
+    const now = Date.now();
+    const recent = this._rendererCrashTimes.filter(
+      (time) => now - time < RENDERER_CRASH_WINDOW_MS
+    );
+    recent.push(now);
+    this._rendererCrashTimes = recent;
+
+    if (recent.length > MAX_AUTO_RELOADS) {
+      return false;
+    }
+
+    // 事件是在 webContents 已经被判定为 gone 之后发出的。等一轮事件循环再发起
+    // 导航，避免和 Chromium 重建 webContents 的过程撞在一起。
+    setImmediate(() => {
+      if (this.window && !this.window.isDestroyed()) {
+        this.reload();
+      }
+    });
+
+    return true;
   }
 
   applySettings () {

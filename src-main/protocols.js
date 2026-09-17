@@ -1,4 +1,5 @@
 const path = require('path');
+const os = require('os');
 const zlib = require('zlib');
 const nodeURL = require('url');
 const {app, protocol, net} = require('electron');
@@ -241,14 +242,25 @@ const getRuntimeCacheRoot = (scheme) => path.join(app.getPath('userData'), schem
  *
  * 用 Map 的插入顺序实现 LRU：命中后删掉再 set 回去，最老的键在遍历时最先
  * 出现。总容量有上限，避免大项目把主进程内存吃满。
+ *
+ * 预算跟着物理内存走，而不是写死一个数：主进程多留一点只是省几次磁盘读，
+ * 渲染进程少一点却可能被内存压力直接压死 —— 那正是「编辑器随时崩溃」
+ * （render-process-gone，reason=oom）最常见的成因。8GB 机器上约 80MB，
+ * 16GB 及以上封顶 128MB，内存更小的机器按比例继续收窄。
  */
-const MEMORY_CACHE_MAX_BYTES = 128 * 1024 * 1024;
+const MEMORY_CACHE_MAX_BYTES = Math.min(
+  128 * 1024 * 1024,
+  Math.max(24 * 1024 * 1024, Math.floor(os.totalmem() * 0.01))
+);
 /**
  * 单个文件超过这个大小就不进内存缓存（避免一个超大素材把缓存挤空）。
- * 取 32MB 是为了确保生产构建的 index.js（含 scratch-vm/render/blocks 的
- * 编辑器整包）一定能被缓存住；正常产物在 10MB 上下。
+ * 生产构建的 index.js（含 scratch-vm/render/blocks 的编辑器整包）正常在 10MB
+ * 上下，所以单条上限必须留够，否则会丢掉冷启动的 code cache 之外那层收益。
  */
-const MEMORY_CACHE_MAX_ENTRY_BYTES = 32 * 1024 * 1024;
+const MEMORY_CACHE_MAX_ENTRY_BYTES = Math.min(
+  32 * 1024 * 1024,
+  MEMORY_CACHE_MAX_BYTES
+);
 /** @type {Map<string, Buffer>} */
 const memoryCache = new Map();
 let memoryCacheBytes = 0;
@@ -877,3 +889,20 @@ app.whenReady().then(() => {
     }
   }
 });
+
+/**
+ * 清空进程内缓存，把内存让给渲染进程。
+ *
+ * 只在渲染进程因为内存不足被终止之后调用（见 crash-messages.js）：重建渲染进程需要
+ * 一大块连续内存，而主进程手里这几百 MB 缓存随时可以丢 —— 丢掉的代价只是下次请求
+ * 重新读盘、重新解压，比渲染进程起不来划算得多。缓存本身是 LRU，不主动清也会在容量
+ * 压力下自己淘汰，这里只是把"让出内存"提前到真正需要的时刻。
+ */
+const clearMemoryCache = () => {
+  memoryCache.clear();
+  memoryCacheBytes = 0;
+};
+
+module.exports = {
+  clearMemoryCache
+};

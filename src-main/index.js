@@ -7,12 +7,14 @@ if (!process.mas && !app.requestSingleInstanceLock()) {
 }
 
 const path = require('path');
+const os = require('os');
 const AbstractWindow = require('./windows/abstract');
 const EditorWindow = require('./windows/editor');
 const {checkForUpdates} = require('./update-checker');
 const {tranlateOrNull} = require('./l10n');
 const migrate = require('./migrate');
 const settings = require('./settings');
+const diagnostics = require('./diagnostics');
 require('./protocols');
 require('./context-menu');
 require('./menu-bar');
@@ -95,6 +97,32 @@ if (settings.hardwareAcceleration) {
   app.disableHardwareAcceleration();
 }
 
+/**
+ * 放宽渲染进程的 V8 老生代上限。
+ *
+ * Chromium 把它**硬编码在 2GB**（V8 的 `V8HeapTrait::kMaxSize`，64 位；源码里只有
+ * "物理内存 ≥16GB 时从 2GB 提到 4GB" 的实验分支），**和机器实际有多少内存无关**。
+ * 对 Scratch 这种「一个大 project.json 解析成几十万个对象」的负载，2GB 是够得着的：
+ * 堆一旦接近上限，V8 的 `CanExpandOldGeneration` 就会判定扩不动，于是**大幅提高
+ * full GC 频率**（表现是周期性卡顿、帧率掉到个位数），再往上就是
+ * "JavaScript heap out of memory"，直接崩掉渲染进程。
+ *
+ * 这里按物理内存给一个更宽松的上限（40%；下限保持 Chromium 的默认值 —— 收紧只会让
+ * GC 更频繁；上限是 V8 在 64 位下的 4GB）：
+ *   4GB 内存  -> 2048MB（等于默认）
+ *   8GB 内存  -> 3276MB
+ *   16GB 以上 -> 4096MB
+ *
+ * 它只是**上限**、不是预分配：普通项目仍然只用几百 MB，V8 需要时才增长。作用是内存
+ * 充裕时不要提前进入剧烈 GC，内存紧张时也不至于被一个过小的天花板逼死在 OOM 上。
+ *
+ * 生效值会记进 diagnostics.log 的 `[heap]` 行（渲染进程的
+ * `performance.memory.jsHeapSizeLimit`）—— 那是唯一能直接读出这个上限的地方。
+ */
+const totalMemoryMB = Math.floor(os.totalmem() / (1024 * 1024));
+const RENDERER_HEAP_LIMIT_MB = Math.min(4096, Math.max(2048, Math.floor(totalMemoryMB * 0.4)));
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${RENDERER_HEAP_LIMIT_MB}`);
+
 // 用户关闭后台节流时，光靠 webContents.setBackgroundThrottling(false) 只能解除
 // "窗口不可见" 这一种节流；Chromium 还会在窗口被遮挡时降低该 renderer 的优先级、
 // 停掉它的绘制，并把后台定时器统一降频。这几个开关只能在启动时通过命令行传入，
@@ -109,6 +137,41 @@ if (!settings.backgroundThrottling) {
   // 的是完整的效果（三件套缺一个都还能被观察到卡顿）。
   app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 }
+
+/**
+ * 需要主进程介入的 https 目标。
+ *
+ * 这些是 AbstractWindow.onBeforeRequest 会重定向的来源：前五个换成对应的扩展库
+ * 协议，后三个（Scratch 素材 CDN）在命中本地素材库时换成 tw-library://。
+ *
+ * ⚠️ **必须与 `src-main/windows/editor.js` 与 `src-main/windows/project-running-window.js`
+ * 里的 `parsed.origin === ...` 分支保持一致**：新增一个重定向目标时，这里也要加，
+ * 否则那个重定向会因为 filter 不匹配而静默失效。核对用技能
+ * `scratch-perf-verify` 里的 `check-webrequest-filter.cjs`（交叉比对两处，不需要编译）。
+ * @type {string[]}
+ */
+const INTERCEPTED_URL_PATTERNS = [
+  // 扩展库
+  'https://extensions.turbowarp.org/*',
+  'https://extensions.bilup.org/*',
+  'https://editors.astras.top/*',
+  'https://extensions.mistium.com/*',
+  'https://sharkpools-extensions.vercel.app/*',
+  // 素材库：命中本地缓存的会重定向到 tw-library://
+  'https://cdn.assets.scratch.mit.edu/*',
+  'https://assets.scratch.mit.edu/*',
+  'https://assets.r2.bilup.org/*'
+];
+
+/**
+ * 需要改写请求头/响应头的那部分：只有 http(s)。
+ *
+ * `onBeforeSendHeaders` 给 http(s) 请求补 referer，`onHeadersReceived` 在
+ * `settings.bypassCORS` 打开时改 http(s) 响应的 CORS/CSP 头。两者对其它协议都只
+ * 走 `callback({})`，所以把 scope 限制在 http(s) 不改变任何行为。
+ * @type {string[]}
+ */
+const WEB_URL_PATTERNS = ['http://*/*', 'https://*/*'];
 
 app.on('session-created', (session) => {
   // Permission requests are delegated to AbstractWindow
@@ -140,7 +203,23 @@ app.on('session-created', (session) => {
     });
   });
 
-  session.webRequest.onBeforeRequest((details, callback) => {
+  // 三个 webRequest 拦截器原本都没有 filter，等于这个 session 里的**每一个**请求都要
+  // 跨进程到主进程走一趟 JS —— 包括编辑器自己的 tw-editor:// 资源，以及打开项目时的
+  // 每一个素材请求（tw-library:// 等）。而那些 handler 对自定义协议只会
+  // callback({}) 直通（见 project-running-window.js 里的 WEB_PROTOCOLS 判断），
+  // 这一趟纯属开销：打开一个项目会发出上千个素材请求（真实作品 1552 个），
+  // 每个请求都要乘三个拦截器。
+  //
+  // 自定义 scheme 写不进 filter（Chromium 报 "Wrong scheme type"），所以反过来做：
+  // 把 filter 收窄成"确实需要处理的那部分"，自定义协议自然被排除。
+  //
+  // 为什么可以不再拦 cspReport / ping（onBeforeRequest 原本无条件 cancel 它们）：
+  // 编辑器协议的 CSP 头由 getBaseProtocolHeaders() 拼装，里面没有
+  // report-uri / report-to，浏览器不会产生 CSP 违规报告；编辑器也不用 <a ping>。
+  // handler 里那段判断保留着，万一以后 filter 放宽仍然生效。
+  session.webRequest.onBeforeRequest({
+    urls: INTERCEPTED_URL_PATTERNS
+  }, (details, callback) => {
     const url = details.url.toLowerCase();
     // Always allow devtools
     if (url.startsWith('devtools:')) {
@@ -159,7 +238,10 @@ app.on('session-created', (session) => {
     window.onBeforeRequest(details, callback);
   });
 
-  session.webRequest.onBeforeSendHeaders((details, callback) => {
+  // 补 referer 这件事只对 http(s) 做（handler 内部就是这么判断的），filter 同样限制在 http(s)。
+  session.webRequest.onBeforeSendHeaders({
+    urls: WEB_URL_PATTERNS
+  }, (details, callback) => {
     const url = details.url.toLowerCase();
     if (url.startsWith('devtools:')) {
       return callback({});
@@ -174,7 +256,10 @@ app.on('session-created', (session) => {
     window.onBeforeSendHeaders(details, callback);
   });
 
-  session.webRequest.onHeadersReceived((details, callback) => {
+  // 同上：只有 http(s) 响应会被改写 CORS / CSP 头。
+  session.webRequest.onHeadersReceived({
+    urls: WEB_URL_PATTERNS
+  }, (details, callback) => {
     const window = AbstractWindow.getWindowByWebContents(details.webContents);
     if (!window) {
       return callback({});
@@ -302,6 +387,13 @@ app.on('second-instance', (event, argv, workingDirectory) => {
 
 app.whenReady().then(() => {
   AbstractWindow.settingsChanged();
+
+  // 记下这次运行的版本、硬件与 GPU 特性状态，然后不阻塞启动继续往下走。
+  // 崩溃日志里"当时机器还剩多少内存"和"WebGL 有没有被降级到软件渲染"是判断
+  // 崩溃原因最关键的两个数字，而它们事后都补不回来。
+  diagnostics.recordEnvironment().catch((error) => {
+    console.error('Could not record diagnostics:', error);
+  });
 
   migratePromise = migrate().then((shouldContinue) => {
     if (!shouldContinue) {

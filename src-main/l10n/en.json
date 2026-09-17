@@ -107,6 +107,14 @@
     "string": "Process crashed: {type}: {reason} ({code})",
     "developer_comment": "Appears when a process crashes"
   },
+  "crash.recovered.title": {
+    "string": "Editor reloaded",
+    "developer_comment": "Appears after a crashed window has been reloaded automatically"
+  },
+  "crash.recovered.description": {
+    "string": "The editor process stopped unexpectedly ({reason}). The window has been reloaded and the project reopened, but changes that were not saved before the crash may be lost.",
+    "developer_comment": "Appears after a crashed window has been reloaded automatically; {reason} is the process exit reason"
+  },
   "prompt.ok": {
     "string": "OK",
     "developer_comment": "Appears in alert boxes, confirmation messages, and text prompts"
