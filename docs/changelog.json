@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.0.7",
+    "date": "2026-09-19",
+    "notes": [
+      "Big update for Git",
+      "Fix some issues about 'Frosted Glass Theme'",
+      "Fix some issues about 'Debugger'",
+      "Add 'Custom addons'"
+    ]
+  },
+  {
     "version": "2.0.6",
     "date": "2026-09-17",
     "notes": [
