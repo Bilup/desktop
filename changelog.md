@@ -2,6 +2,9 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.8 (2026-09-21)
+- Emergency fix for a critical issue: cann't loading local assets
+
 # 2.0.7 (2026-09-19)
 - Big update for Git
 - Fix some issues about 'Frosted Glass Theme'
