@@ -126,8 +126,17 @@ const FILE_SCHEMES = {
   }
 };
 
-const MIME_TYPES = new Map();
-MIME_TYPES.set('.html', 'text/html');
+/**
+ * 在模块加载时就把 scheme 名字写回 metadata。
+ *
+ * 注册循环里也会写一次，但那要等到 app ready；预热、运行时缓存目录这些地方如果
+ * 依赖"注册已经跑过"，就会变成一个只在特定启动时序下才成立的隐式假设。
+ */
+for (const [scheme, metadata] of Object.entries(FILE_SCHEMES)) {
+  metadata.scheme = scheme;
+}
+
+const MIME_TYPES = new Map();MIME_TYPES.set('.html', 'text/html');
 MIME_TYPES.set('.js', 'text/javascript');
 MIME_TYPES.set('.map', 'application/json');
 MIME_TYPES.set('.txt', 'text/plain');
@@ -903,6 +912,132 @@ const clearMemoryCache = () => {
   memoryCacheBytes = 0;
 };
 
+/**
+ * 编辑器窗口的关键文件（相对 tw-editor 根目录）。
+ *
+ * 这三个 HTML 与入口包是"窗口出现 → 首屏可用"这一段里必须等的东西，而且是**串行**
+ * 等的：先读 HTML，解析完才发起到入口包的请求。把它们提前读进内存，等于把两次
+ * asar 读盘从首屏的关键路径挪到了窗口构造之前。
+ */
+const EDITOR_CRITICAL_PATHS = [
+  'gui/gui.html',
+  'gui/index.js',
+  'addons/addons.html',
+  'settings/settings.html'
+];
+
+/**
+ * 预热时允许读进来的总字节上限。
+ *
+ * 这些文件本来也会在第一次请求时进入同一个 LRU（预算见 MEMORY_CACHE_MAX_BYTES），
+ * 预热只是把时间点提前，所以上限跟缓存预算保持一致即可，不会额外占内存。
+ */
+const PREWARM_MAX_BYTES = MEMORY_CACHE_MAX_BYTES;
+
+/**
+ * 预热时的并发度。太高会跟真正要用的请求抢磁盘队列，反而拖慢首屏。
+ */
+const PREWARM_CONCURRENCY = 6;
+
+/**
+ * 后台预热编辑器资源，让首屏的关键路径上没有读盘。
+ *
+ * 为什么要做：网页端第二次打开编辑器时，HTML 与入口包都在浏览器 HTTP 磁盘缓存里，
+ * 请求直接命中缓存；而桌面端的自定义协议**不经过 Chromium 的 HTTP 缓存**，
+ * 每一个资源请求都由主进程现场读盘。对 `tw-editor` 而言这一层只有进程内 LRU 兜着，
+ * 而 LRU 在进程刚起来时必然是空的 —— 于是每次启动都要为同一个几 MB 的入口包重付
+ * 一次 asar 读盘，而且就发生在窗口刚出现、用户正盯着转圈的那一刻。
+ *
+ * 预热把这次读盘从"首屏关键路径"挪到"Electron 还在构造窗口"的那段时间里，两者天然
+ * 重叠。第二阶段（积木图标与字体这类零碎小文件）刻意延后，避免和入口包抢 IO。
+ *
+ * 全程静默：任何一个文件不存在、读不动、asar 尚未就绪，都只是那一条不预热而已。
+ */
+const prewarmEditorAssets = () => {
+  const metadata = FILE_SCHEMES['tw-editor'];
+  if (!metadata) {
+    // 方案表被改过：预热不是必需品，直接放弃。
+    return;
+  }
+  const root = path.join(metadata.root, '/');
+  const fsPromises = require('fs/promises');
+  let budget = PREWARM_MAX_BYTES;
+
+  const warmOne = async (relativePath) => {
+    const key = memoryCacheKey(metadata.scheme, relativePath);
+    if (memoryCacheGet(key)) {
+      return 0;
+    }
+    const absolutePath = path.join(root, relativePath);
+    if (!absolutePath.startsWith(root)) {
+      return 0;
+    }
+    try {
+      const data = await fsPromises.readFile(absolutePath);
+      if (data.length > budget) {
+        return 0;
+      }
+      budget -= data.length;
+      memoryCacheSet(key, data);
+      return data.length;
+    } catch (error) {
+      // 文件不在（dev 未构建、该主题未打包等）属于正常情况。
+      return 0;
+    }
+  };
+
+  const warmMany = async (relativePaths) => {
+    const queue = relativePaths.slice();
+    const workers = new Array(Math.min(PREWARM_CONCURRENCY, queue.length)).fill(null).map(async () => {
+      while (queue.length > 0 && budget > 0) {
+        await warmOne(queue.shift());
+      }
+    });
+    await Promise.all(workers);
+  };
+
+  const collectStaticPaths = async (directory, prefix) => {
+    /** @type {string[]} */
+    const found = [];
+    let entries;
+    try {
+      entries = await fsPromises.readdir(directory, {withFileTypes: true});
+    } catch (error) {
+      return found;
+    }
+    for (const entry of entries) {
+      const relativePath = `${prefix}${entry.name}`;
+      if (entry.isDirectory()) {
+        found.push(...await collectStaticPaths(path.join(directory, entry.name), `${relativePath}/`));
+      } else {
+        found.push(relativePath);
+      }
+    }
+    return found;
+  };
+
+  // 第一阶段：首屏真正要等的几个文件，立刻开始，和窗口构造并行。
+  warmMany(EDITOR_CRITICAL_PATHS).then(() => {
+    console.log(`[prewarm] editor critical assets ready (${memoryCacheBytes} bytes cached)`);
+  }).catch(() => {});
+
+  // 第二阶段：积木图标 / 字体这类零碎小文件，等首屏过去之后再补。
+  // 它们的价值在于把"打开积木面板时集中爆发的一串小请求"从读盘变成命中内存。
+  const staticTimer = setTimeout(() => {
+    collectStaticPaths(path.join(metadata.root, 'static'), 'static/')
+      .then((paths) => warmMany(paths))
+      .then(() => {
+        console.log(`[prewarm] editor static assets scanned (${memoryCacheBytes} bytes cached)`);
+      })
+      .catch(() => {});
+  }, 2500);
+  // 不要让这个后台任务把退出流程拖住。
+  if (staticTimer && typeof staticTimer.unref === 'function') {
+    staticTimer.unref();
+  }
+};
+
 module.exports = {
-  clearMemoryCache
+  clearMemoryCache,
+  prewarmEditorAssets
 };

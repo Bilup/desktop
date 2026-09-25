@@ -15,7 +15,7 @@ const {tranlateOrNull} = require('./l10n');
 const migrate = require('./migrate');
 const settings = require('./settings');
 const diagnostics = require('./diagnostics');
-require('./protocols');
+const protocols = require('./protocols');
 require('./context-menu');
 require('./menu-bar');
 require('./crash-messages');
@@ -386,7 +386,20 @@ app.on('second-instance', (event, argv, workingDirectory) => {
 });
 
 app.whenReady().then(() => {
+  diagnostics.bootMark('app ready');
+
   AbstractWindow.settingsChanged();
+
+  // 预热编辑器资源。
+  //
+  // 自定义协议不经过 Chromium 的 HTTP 缓存，编辑器 HTML 与入口包每次启动都要由
+  // 主进程重新从 asar 读一遍，而且正好落在"窗口已出现、用户在看转圈"的那一刻。
+  // 提前发起读盘，让它和下面的 migrate()、窗口构造天然重叠，首屏那次请求就只剩
+  // 一次内存命中。见 protocols.js 的 prewarmEditorAssets。
+  //
+  // 放在最前面是有意的：越早发起，能重叠进去的部分越多；它自己是异步且静默失败的，
+  // 不会阻塞任何后续步骤。
+  protocols.prewarmEditorAssets();
 
   // 记下这次运行的版本、硬件与 GPU 特性状态，然后不阻塞启动继续往下走。
   // 崩溃日志里"当时机器还剩多少内存"和"WebGL 有没有被降级到软件渲染"是判断
@@ -410,6 +423,7 @@ app.whenReady().then(() => {
       ...filesQueuedToOpen,
       ...commandLineOptions.files
     ], commandLineOptions.fullscreen, process.cwd());
+    diagnostics.bootMark('first window created');
 
     if (AbstractWindow.getAllWindows().length === 0) {
       // No windows were successfully opened. Let's just quit.

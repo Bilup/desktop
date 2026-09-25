@@ -273,6 +273,25 @@ const recordCrash = (type, reason, exitCode, url, webContentsId) => {
 };
 
 /**
+ * 主进程启动至今的毫秒数。
+ *
+ * `process.uptime()` 在主进程里就是"这个进程活了多久"，比自己在模块顶层记一个
+ * 时间戳更准：模块被 require 之前 Electron 已经跑完了一整轮引导（加载 asar、
+ * 初始化 V8、启动 browser/GPU/utility 等子进程），那段时间恰恰是"桌面端打开比
+ * 网页端慢"里最不透明的一段。用它把启动过程分段记下来，才不用凭感觉猜。
+ * @returns {number}
+ */
+const uptimeMs = () => Math.round(process.uptime() * 1000);
+
+/**
+ * 记一个启动节点，输出成 `[boot] <标签> @<毫秒>ms`。
+ * @param {string} label
+ */
+const bootMark = (label) => {
+  write('boot', `${label} @${uptimeMs()}ms`);
+};
+
+/**
  * Record which graphics features Chromium says are available.
  *
  * "enabled" means accelerated; anything mentioning software means the work fell
@@ -304,19 +323,84 @@ const recordGpuFeatureStatus = () => {
 };
 
 /**
- * Record the adapter list and which one is active.
+ * 从 `getGPUInfo()` 的结果里挑出少量关键字段，缺一个也不报错。
+ * @param {Record<string, unknown>|null|undefined} source
+ * @param {string[]} keys
+ * @returns {string}
+ */
+const pick = (source, keys) => {
+  if (!source) {
+    return '';
+  }
+  const parts = [];
+  for (const key of keys) {
+    const value = source[key];
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+    parts.push(`${key}=${String(value)}`);
+  }
+  return parts.join(' ');
+};
+
+/**
+ * `getGPUInfo('complete')` 里那些"为什么没走上硬件"的字段。
+ *
+ * 只看 `getGPUFeatureStatus()` 的结论（"跑在 CPU 上"）解决不了问题，必须知道
+ * **原因**：
+ *   - `softwareRendering=true`   Chromium 自己决定用软件渲染
+ *   - `isVirtualized=true`       检测到虚拟化/远程会话环境（向日葵、RDP 等虚拟
+ *                                显示器驱动就会触发，会让 Chromium 主动放弃硬件）
+ *   - `glRenderer` / `glVendor`  GPU 进程实际拿到的 GL 实现，是最终结论本身
+ *   - `directComposition`        合成是否走 DComp
+ * 这几项合起来才能区分"驱动被黑名单拦掉""环境被判定为虚拟化""GL 初始化失败"。
+ * @type {string[]}
+ */
+const GPU_AUX_KEYS = [
+  'glRenderer',
+  'glVendor',
+  'glVersion',
+  'glImplementationParts',
+  'softwareRendering',
+  'isVirtualized',
+  'directComposition',
+  'directRendering',
+  'videoDecode',
+  'videoEncode',
+  'maxTextureSize'
+];
+
+/** @type {string[]} */
+const GPU_DEVICE_KEYS = [
+  'active',
+  'activeVendorId',
+  'activeDeviceId',
+  'vendorId',
+  'deviceId',
+  'driverVendor',
+  'driverVersion',
+  'gpuPreference'
+];
+
+/**
+ * Record the adapter list, which one is active, and (when asked) why.
  *
  * Worth logging in full because "which GPU did it pick" is invisible from the
  * UI and is a common cause of both slowness and instability on machines with
  * more than one adapter (hybrid laptops, and anything with a virtual display
  * driver installed).
+ *
+ * ⚠️ 采样时机很重要：`'basic'` 明确**不等待** GPU 进程的全部信息，所以启动瞬间
+ * 拿到的 `active=false` 可能只是"还没准备好"，不是"用不上"。要下结论必须用
+ * `'complete'`，而且要等首屏加载完之后再采（见 recordStartupProfile）。
+ * @param {'basic'|'complete'} [level]
  */
-const recordGpuInfo = async () => {
+const recordGpuInfo = async (level = 'basic') => {
   let info;
   try {
-    info = await app.getGPUInfo('basic');
+    info = await app.getGPUInfo(level);
   } catch (error) {
-    logError(`Could not read GPU info: ${error.message}`);
+    logError(`Could not read GPU info (${level}): ${error.message}`);
     return;
   }
   if (!info || !Array.isArray(info.gpuDevice)) {
@@ -324,20 +408,188 @@ const recordGpuInfo = async () => {
   }
 
   info.gpuDevice.forEach((device, index) => {
-    write('gpu', [
-      `device[${index}]`,
+    const extra = pick(device, GPU_DEVICE_KEYS);
+    const fallback = [
       `active=${Boolean(device.active)}`,
       `vendor=${device.vendorString || device.vendorId}`,
       `device=${device.deviceString || device.deviceId}`,
       `driver=${device.driverVersion || 'unknown'}`
-    ].join(' '));
+    ].join(' ');
+    write('gpu', `device[${index}] ${extra || fallback}`);
   });
 
   const active = info.gpuDevice.filter((device) => device.active);
   if (active.length > 1) {
     logError(`More than one active GPU reported (${active.length}); rendering may move between them.`);
   }
+
+  if (level === 'complete') {
+    const summary = pick(info.auxAttributes, GPU_AUX_KEYS);
+    if (summary) {
+      write('gpu', `driver: ${summary}`);
+    }
+    if (info.auxAttributes && info.auxAttributes.softwareRendering) {
+      logError(
+        'The GPU process reports softwareRendering=true: Chromium has given up on ' +
+        'hardware acceleration for this machine, so the editor runs on the CPU no ' +
+        'matter what the app does. Compare with the browser on the same machine ' +
+        '(chrome://gpu) - if the browser is accelerated, the difference is here.'
+      );
+    }
+    if (info.auxAttributes && info.auxAttributes.isVirtualized) {
+      logError(
+        'The GPU process reports isVirtualized=true (a virtual display / remote ' +
+        'session driver is present). Chromium disables hardware acceleration in ' +
+        'that environment by design.'
+      );
+    }
+  }
 };
+
+/**
+ * 在渲染进程里探一次 WebGL，拿到**实际后端**的名字。
+ *
+ * 这是"桌面端到底是硬件还是软件渲染"唯一能一锤定音的证据，也是唯一能直接和
+ * 浏览器对比的东西：同一台机器上，同一个 URL 在浏览器里 `webgl` 的
+ * UNMASKED_RENDERER 应该和这里一模一样。差别只可能来自 GPU 开关、GPU 进程
+ * 状态或环境判定。
+ *
+ * `failIfMajorPerformanceCaveat: true` 是 Chromium 自己的"这是软件渲染"信号：
+ * 返回 null 就表示它认为这个上下文有重大性能缺陷（SwiftShader / 软件光栅）。
+ */
+const GRAPHICS_PROBE = `(() => {
+  const out = {dpr: window.devicePixelRatio, cores: navigator.hardwareConcurrency};
+  const describe = (type) => {
+    const info = {};
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext(type);
+    if (!gl) return {available: false};
+    info.available = true;
+    const debug = gl.getExtension('WEBGL_debug_renderer_info');
+    info.renderer = String(debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    info.vendor = String(debug ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR));
+    info.version = String(gl.getParameter(gl.VERSION));
+    info.maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    const lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+    return info;
+  };
+  try {
+    const strict = document.createElement('canvas');
+    out.caveatBlocked = !strict.getContext('webgl', {failIfMajorPerformanceCaveat: true});
+  } catch (error) {
+    out.caveatBlocked = null;
+  }
+  try { out.webgl2 = describe('webgl2'); } catch (error) { out.webgl2 = {error: String(error)}; }
+  try { out.webgl = describe('webgl'); } catch (error) { out.webgl = {error: String(error)}; }
+  const nav = performance.getEntriesByType('navigation')[0];
+  if (nav) {
+    out.navigation = {
+      startTime: Math.round(nav.startTime),
+      responseEnd: Math.round(nav.responseEnd),
+      domInteractive: Math.round(nav.domInteractive),
+      domContentLoaded: Math.round(nav.domContentLoadedEventEnd),
+      loadEnd: Math.round(nav.loadEventEnd),
+      encodedBodySize: nav.encodedBodySize
+    };
+  }
+  out.timeOrigin = Math.round(performance.timeOrigin);
+  out.now = Math.round(performance.now());
+  return JSON.stringify(out);
+})()`;
+
+/**
+ * 采样渲染进程的 WebGL 后端与导航分段，并给 GPU 下一个**可信**的结论。
+ *
+ * 只在第一个窗口加载完成后跑一次，且刻意延迟几秒：探针本身要创建 GL 上下文、
+ * `getGPUInfo('complete')` 会等 GPU 进程把信息备齐，两者都不该挤在首屏的关键
+ * 路径上（首屏那几百毫秒正是要量清楚的东西）。
+ * @param {Electron.WebContents} webContents
+ */
+const recordStartupProfile = async (webContents) => {
+  if (startupProfileRecorded) {
+    return;
+  }
+  startupProfileRecorded = true;
+
+  const mainStartEpoch = Date.now() - uptimeMs();
+
+  if (webContents && !webContents.isDestroyed()) {
+    let raw;
+    try {
+      raw = await webContents.executeJavaScript(GRAPHICS_PROBE, false);
+    } catch (error) {
+      logError(`Could not probe WebGL in the renderer: ${error.message}`);
+    }
+
+    let sample = null;
+    try {
+      sample = raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      sample = null;
+    }
+
+    if (sample) {
+      const gl = sample.webgl2 && sample.webgl2.available ? sample.webgl2 : sample.webgl;
+      const describe = (info) => {
+        if (!info) return 'missing';
+        if (!info.available) return 'unavailable';
+        return `${info.renderer} | vendor=${info.vendor} | version=${info.version} | maxTexture=${info.maxTexture}`;
+      };
+      write('webgl', [
+        `webgl2=${describe(sample.webgl2)}`,
+        `webgl=${describe(sample.webgl)}`,
+        `software=${sample.caveatBlocked === true}`,
+        `dpr=${sample.dpr}`,
+        `cores=${sample.cores}`
+      ].join(' | '));
+
+      if (sample.caveatBlocked === true) {
+        logError(
+          'The renderer\'s WebGL context reports a major performance caveat, which ' +
+          'means it is running on a software rasterizer (SwiftShader). Frame rate ' +
+          'in the editor will be a fraction of a hardware-accelerated browser.'
+        );
+      }
+      if (!gl) {
+        logError('No usable WebGL context could be created in the renderer.');
+      }
+
+      if (sample.navigation) {
+        const nav = sample.navigation;
+        // `timeOrigin` 是渲染进程这次导航开始的**绝对**时刻（epoch ms），而
+        // `nav.startTime` 永远是 0（它就是相对 timeOrigin 的）。两者相减得到
+        // "主进程启动 → 渲染进程开始导航"的耗时 = Electron 自己的引导开销。
+        // 浏览器标签页没有这一段（浏览器进程早就热着），这是桌面端结构性的、
+        // 靠改 webpack 配置消不掉的一段；量出绝对值才能判断还值不值得优化。
+        const bootstrap = sample.timeOrigin ? sample.timeOrigin - mainStartEpoch : null;
+        write('boot', [
+          `bootstrap=${bootstrap === null ? 'unknown' : `+${bootstrap}ms`}`,
+          `responseEnd=+${nav.responseEnd}ms`,
+          `domInteractive=+${nav.domInteractive}ms`,
+          `domContentLoaded=+${nav.domContentLoaded}ms`,
+          `loadEnd=+${nav.loadEnd}ms`,
+          `pageNow=+${sample.now}ms`,
+          `htmlBytes=${nav.encodedBodySize}`
+        ].join(' | '));
+      }
+    }
+  }
+
+  // 给 GPU 进程一点时间把信息备齐，再下结论。
+  setTimeout(() => {
+    recordGpuFeatureStatus();
+    recordGpuInfo('complete').catch((error) => {
+      console.error('Could not record detailed GPU info:', error);
+    });
+  }, GPU_VERDICT_DELAY_MS);
+};
+
+/** 启动画像只采一次，避免每开一个窗口都写一遍。 */
+let startupProfileRecorded = false;
+
+/** 首屏加载完成后等这么久再下 GPU 结论。 */
+const GPU_VERDICT_DELAY_MS = 4000;
 
 /**
  * Collect everything worth knowing about this run. Safe to call once the app is
@@ -356,13 +608,15 @@ const recordEnvironment = async () => {
   ].join(' | '));
 
   recordGpuFeatureStatus();
-  await recordGpuInfo();
+  await recordGpuInfo('basic');
 };
 
 module.exports = {
+  bootMark,
   log,
   logError,
   recordCrash,
   recordEnvironment,
-  recordRendererHeap
+  recordRendererHeap,
+  recordStartupProfile
 };
