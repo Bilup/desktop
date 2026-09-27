@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.0.9",
+    "date": "2026-09-27",
+    "notes": [
+      "Update 'Frosted Glass Theme'",
+      "Update 'Find-bar' & 'Spotlight'",
+      "Improve the performance",
+      "Fix some known issues"
+    ]
+  },
+  {
     "version": "2.0.8",
     "date": "2026-09-21",
     "notes": [
