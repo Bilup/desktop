@@ -9,7 +9,7 @@
   },
   "type": "commonjs",
   "scripts": {
-    "fetch": "node scripts/patch-scratch-gui-settings.mjs && node scripts/check-scratch-gui-integrity.mjs && node scripts/download-library-files.mjs && node scripts/download-packager.mjs && node scripts/prepare-extensions.mjs && node scripts/prepare-bilup-extensions.mjs && node scripts/prepare-mw-extensions.mjs && node scripts/prepare-sp-extensions.mjs",
+    "fetch": "node scripts/prepare-microbit-hex.mjs && node scripts/patch-scratch-gui-settings.mjs && node scripts/check-scratch-gui-integrity.mjs && node scripts/download-library-files.mjs && node scripts/download-packager.mjs && node scripts/prepare-extensions.mjs && node scripts/prepare-bilup-extensions.mjs && node scripts/prepare-mw-extensions.mjs && node scripts/prepare-sp-extensions.mjs",
     "webpack:compile": "webpack",
     "webpack:watch": "webpack --watch",
     "webpack:prod": "cross-env NODE_ENV=production webpack",
@@ -30,7 +30,7 @@
     "@turbowarp/extensions": "github:TurboWarp/extensions#master",
     "@turbowarp/scratch-svg-renderer": "^1.1.0",
     "@bilup/extensions": "github:Bilup/extensions#main",
-    "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#develop-builds",
+    "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#develop",
     "react-router": "^6.30.4",
     "react-router-dom": "^6.30.4",
     "jszip": "^3.10.1",
@@ -51,7 +51,7 @@
     "react-dom": "^16.14.0",
     "react-redux": "^5.0.7",
     "redux": "^3.7.2",
-    "scratch-gui": "github:Bilup/scratch-gui#develop-builds",
+    "scratch-gui": "github:Bilup/scratch-gui#develop",
     "style-loader": "^0.23.0",
     "url-loader": "^4.1.1",
     "webpack": "4.47.0",
@@ -86,6 +86,10 @@
   "build": {
     "appId": "org.bilup.desktop",
     "productName": "Bilup",
+    "electronLanguages": [
+      "en-US",
+      "zh-CN"
+    ],
     "files": [
       "node_modules/**/*",
       "src-main/**/*",
@@ -97,7 +101,9 @@
       "dist-bilup-extensions/**/*",
       "dist-astra-extensions/**/*",
       "dist-mw-extensions/**/*",
-      "dist-sp-extensions/**/*"
+      "dist-sp-extensions/**/*",
+      "!**/*.map",
+      "!**/*.d.ts"
     ],
     "extraResources": [
       {

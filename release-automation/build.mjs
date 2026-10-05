@@ -223,6 +223,9 @@ const build = async ({
         tw_warn_legacy: isProduction,
         tw_update: isProduction && manageUpdates
       },
+      // 正式发布（--production）用 LZMA 把安装包压到最小；本地/调试构建保持默认的
+      // deflate，省掉 LZMA 的打包耗时。单个 target 可在自己的 extraConfig 里覆盖。
+      compression: isProduction ? 'maximum' : 'normal',
       afterPack: arch === Arch.universal ? afterPackForUniversalMac : afterPack,
       afterSign,
       ...extraConfig
@@ -266,7 +269,12 @@ const buildWindowsLegacy = () => build({
 const buildWindowsPortable = () => build({
   platformName: 'WINDOWS',
   platformType: 'portable',
-  manageUpdates: true
+  manageUpdates: true,
+  extraConfig: {
+    // 便携版每次启动都要先把自身解压到临时目录，用 LZMA 会明显拖慢启动，
+    // 所以这一路固定走默认压缩，不跟随 release 的 maximum。
+    compression: 'normal'
+  }
 });
 
 const buildWindowsDir = () => build({
