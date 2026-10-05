@@ -18,6 +18,8 @@ jobs:
           node-version: 24
       - name: Install Yarn
         run: npm install -g yarn
+      - name: Sync scratch-gui dependencies
+        run: node scripts/sync-scratch-deps.mjs
       - name: Install dependencies
         uses: nick-fields/retry@v3
         with:
@@ -68,6 +70,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y strip-nondeterminism fakeroot ruby ruby-dev rubygems libarchive-tools rpm
           sudo gem install --no-document fpm
+      - name: Sync scratch-gui dependencies
+        run: node scripts/sync-scratch-deps.mjs
       - name: Install dependencies
         uses: nick-fields/retry@v3
         with:
@@ -115,6 +119,8 @@ jobs:
           node-version: 24
       - name: Install Yarn
         run: npm install -g yarn
+      - name: Sync scratch-gui dependencies
+        run: node scripts/sync-scratch-deps.mjs
       - name: Install dependencies
         uses: nick-fields/retry@v3
         with:
@@ -200,6 +206,9 @@ jobs:
         shell: pwsh
         run: |
           yarn config set cache-folder D:\yarn-cache
+      - name: Sync scratch-gui dependencies
+        working-directory: D:\repo
+        run: node scripts/sync-scratch-deps.mjs
       - name: Install dependencies
         uses: nick-fields/retry@v3
         with:

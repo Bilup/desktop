@@ -247,5 +247,17 @@
       }
     ]
   },
+  "resolutions": {
+    "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#6bcaee81f6bb5d094d88e73fa2dd1c1a44fb329c",
+    "@bilup/scratch-storage": "github:Bilup/scratch-storage#54e6f928b22aa075ce09908aac6c287a654a62a6",
+    "@bilup/scratch-svg-renderer": "github:Bilup/scratch-svg-renderer#cb48d4ab124c86cd355f500a4abdb41b3a560af8",
+    "scratch-audio": "github:Bilup/scratch-audio#4a4e4b225280eb4541d6997aa22f678a35ab1ae6",
+    "scratch-blocks": "github:Bilup/new-scratch-blocks#468d2fb713c9009a9f506d158f8f186dede26b73",
+    "scratch-paint": "github:Bilup/scratch-paint#4d9a590cac08378c0da1719fca0556da746adcb2",
+    "scratch-parser": "github:Bilup/scratch-parser#87a26f096e719e2204f96bfb859e10a709449e59",
+    "scratch-render": "github:Bilup/scratch-render#b629d038754b3c235751f871ab408a8974796ff8",
+    "scratch-render-fonts": "github:Bilup/scratch-render-fonts#d09642667e6b3ca7cf9420cd92350ce177694ad5",
+    "scratch-vm": "github:Bilup/scratch-vm#64274f285fe03da857808e78d37fef2d3237f3d4"
+  },
   "private": true
 }
