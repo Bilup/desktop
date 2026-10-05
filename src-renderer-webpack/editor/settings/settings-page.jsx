@@ -13,7 +13,6 @@ import {Menu, Palette, Radio, Store, SwatchBook, User, Brush} from 'lucide-react
 import {applyTheme, detectTheme} from 'scratch-gui/src/lib/themes/themePersistance.js';
 import {ThemeAccentPanel} from 'scratch-gui/src/components/tw-settings-modal/theme-accent-panel.jsx';
 import CustomThemesPage from 'scratch-gui/src/components/tw-settings-modal/custom-themes-page.jsx';
-import BilupThemePanel from 'scratch-gui/src/community/components/WarpThemePanel.jsx';
 import Sidebar from 'scratch-gui/src/community/components/Sidebar.jsx';
 import {useUser} from 'scratch-gui/src/community/UserContext.jsx';
 import {
@@ -188,16 +187,6 @@ const Settings = ({isScratchDesktop: desktop = isScratchDesktop()}) => {
                                 theme={theme}
                                 onChangeTheme={applyAndPersist}
                                 onOpenWarpThemeMarketplace={desktopApp ? null : () => setActiveSection('biluptheme')}
-                            />
-                        </section>
-                    ) : null}
-
-                    {activeSection === 'biluptheme' ? (
-                        <section className={styles.card}>
-                            <h2>{t('mw.community.settings.biluptheme', 'BilupTheme marketplace')}</h2>
-                            <BilupThemePanel
-                                theme={theme}
-                                onThemeChange={applyAndPersist}
                             />
                         </section>
                     ) : null}
