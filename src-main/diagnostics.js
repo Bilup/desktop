@@ -149,6 +149,29 @@ const recordRendererHeap = async (webContents) => {
 };
 
 /**
+ * 延迟一段时间后再采一次渲染进程堆。
+ *
+ * 必须把 window 本身传进来、在回调**内部**才去取 webContents：BrowserWindow 被销毁后
+ * `window.webContents` 这个 getter 会直接抛 "Object has been destroyed"，而且是在
+ * **参数求值阶段**抛的 —— recordRendererHeap 内部那层 isDestroyed() 检查根本轮不到执行，
+ * 异常会逃逸成主进程未捕获错误，弹出
+ * "A JavaScript error occurred in the main process"。
+ *
+ * 采样延迟有十几秒，而弹窗类窗口（Migrate / Update / Packager…）完成任务后会立刻
+ * destroy()，踩中这一刻是常态。
+ * @param {Electron.BrowserWindow} window
+ * @param {number} delay
+ */
+const scheduleRendererHeapSample = (window, delay) => {
+  setTimeout(() => {
+    if (!window || window.isDestroyed()) {
+      return;
+    }
+    recordRendererHeap(window.webContents);
+  }, delay);
+};
+
+/**
  * A one-line snapshot of how much memory the machine has left right now.
  * On Windows os.freemem() is the physical memory still available, which is the
  * number that decides whether an allocation in the renderer can succeed.
@@ -618,5 +641,6 @@ module.exports = {
   recordCrash,
   recordEnvironment,
   recordRendererHeap,
-  recordStartupProfile
+  recordStartupProfile,
+  scheduleRendererHeapSample
 };

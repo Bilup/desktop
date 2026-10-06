@@ -336,9 +336,9 @@ class EditorWindow extends ProjectRunningWindow {
 
       // 数据已经交出去，等渲染进程把它解压、解析完再采一次堆状况（只更新内存里的值，
       // 不写盘；真正写盘发生在崩溃记录里，见 diagnostics.recordCrash）。
-      setTimeout(() => {
-        diagnostics.recordRendererHeap(this.window.webContents);
-      }, PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS);
+      // 采样延迟十几秒，用户很可能已经关掉窗口或切到别的文件了，所以必须走
+      // scheduleRendererHeapSample —— 它会在回调内部先检查窗口是否已销毁。
+      diagnostics.scheduleRendererHeapSample(this.window, PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS);
 
       return {
         name,

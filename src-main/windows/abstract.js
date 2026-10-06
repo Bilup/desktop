@@ -49,16 +49,16 @@ class AbstractWindow {
     // 页面加载完延迟采一次渲染进程的 V8 堆状况。`performance.memory` 只在渲染进程里
     // 有，而它是唯一能直接读出「渲染进程被允许用多少 JS 堆」的地方 —— 用来验证
     // --js-flags 有没有生效（见 index.js 的 RENDERER_HEAP_LIMIT_MB），也作为崩溃
-    // 记录的基线。窗口已销毁时 recordRendererHeap 会直接返回。
+    // 记录的基线。
     this.window.webContents.on('did-finish-load', () => {
       // 启动画像：Electron 引导耗时、渲染进程的导航分段、以及 WebGL 实际跑在
       // 哪个后端。只在第一个窗口采一次，内部还会再延迟几秒才给 GPU 下结论
       // （探针要创建 GL 上下文，不能挤在首屏的关键路径上）。
       diagnostics.recordStartupProfile(this.window.webContents);
 
-      setTimeout(() => {
-        diagnostics.recordRendererHeap(this.window.webContents);
-      }, RENDERER_HEAP_SAMPLE_DELAY_MS);
+      // 采样延迟十几秒，窗口那时可能早已销毁，所以必须走 scheduleRendererHeapSample：
+      // 在这里直接写 this.window.webContents，会在传参阶段就抛 "Object has been destroyed"。
+      diagnostics.scheduleRendererHeapSample(this.window, RENDERER_HEAP_SAMPLE_DELAY_MS);
     });
 
     if (!options.existingWindow) {
