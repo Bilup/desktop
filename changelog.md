@@ -2,6 +2,9 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.10 (2026-10-06)
+- The latest version update of Bilup.
+
 # 2.0.9 (2026-09-27)
 - Update 'Frosted Glass Theme'
 - Update 'Find-bar' & 'Spotlight'
