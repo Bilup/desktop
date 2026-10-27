@@ -248,16 +248,16 @@
     ]
   },
   "resolutions": {
-    "@bilup/scratch-l10n": "github:Bilup/scratch-l10n#6bcaee81f6bb5d094d88e73fa2dd1c1a44fb329c",
-    "@bilup/scratch-storage": "github:Bilup/scratch-storage#54e6f928b22aa075ce09908aac6c287a654a62a6",
-    "@bilup/scratch-svg-renderer": "github:Bilup/scratch-svg-renderer#cb48d4ab124c86cd355f500a4abdb41b3a560af8",
-    "scratch-audio": "github:Bilup/scratch-audio#4a4e4b225280eb4541d6997aa22f678a35ab1ae6",
-    "scratch-blocks": "github:Bilup/new-scratch-blocks#468d2fb713c9009a9f506d158f8f186dede26b73",
-    "scratch-paint": "github:Bilup/scratch-paint#4d9a590cac08378c0da1719fca0556da746adcb2",
-    "scratch-parser": "github:Bilup/scratch-parser#87a26f096e719e2204f96bfb859e10a709449e59",
-    "scratch-render": "github:Bilup/scratch-render#b629d038754b3c235751f871ab408a8974796ff8",
-    "scratch-render-fonts": "github:Bilup/scratch-render-fonts#d09642667e6b3ca7cf9420cd92350ce177694ad5",
-    "scratch-vm": "github:Bilup/scratch-vm#64274f285fe03da857808e78d37fef2d3237f3d4"
+    "@bilup/scratch-l10n": "https://github.com/Bilup/scratch-l10n/archive/6bcaee81f6bb5d094d88e73fa2dd1c1a44fb329c.tar.gz",
+    "@bilup/scratch-storage": "https://github.com/Bilup/scratch-storage/archive/54e6f928b22aa075ce09908aac6c287a654a62a6.tar.gz",
+    "@bilup/scratch-svg-renderer": "https://github.com/Bilup/scratch-svg-renderer/archive/cb48d4ab124c86cd355f500a4abdb41b3a560af8.tar.gz",
+    "scratch-audio": "https://github.com/Bilup/scratch-audio/archive/4a4e4b225280eb4541d6997aa22f678a35ab1ae6.tar.gz",
+    "scratch-blocks": "https://github.com/Bilup/new-scratch-blocks/archive/468d2fb713c9009a9f506d158f8f186dede26b73.tar.gz",
+    "scratch-paint": "https://github.com/Bilup/scratch-paint/archive/9e774ac85bd295fa726b9a7c137fcc5b3e679473.tar.gz",
+    "scratch-parser": "https://github.com/Bilup/scratch-parser/archive/87a26f096e719e2204f96bfb859e10a709449e59.tar.gz",
+    "scratch-render": "https://github.com/Bilup/scratch-render/archive/758a414248724dc3b21a78fe0f238a60cbe2ff9a.tar.gz",
+    "scratch-render-fonts": "https://github.com/Bilup/scratch-render-fonts/archive/d09642667e6b3ca7cf9420cd92350ce177694ad5.tar.gz",
+    "scratch-vm": "https://github.com/Bilup/scratch-vm/archive/e5b1731dced450d106e21cf36fbeda4cc95d034a.tar.gz"
   },
   "private": true
 }

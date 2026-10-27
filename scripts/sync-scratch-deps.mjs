@@ -9,6 +9,13 @@
 // 这里从 scratch-gui 的 pnpm-lock.yaml 抽出全部 git(tarball) 依赖的 commit，
 // 写进 desktop 的 package.json 的 resolutions，让 yarn 解析整棵依赖树时都用同一批 commit。
 //
+// ⛔ 写进 resolutions 的地址必须是 `<repo>/archive/<sha>.tar.gz`，不能是 `github:repo#sha`。
+// yarn 1 解析 git 依赖时会先跑 `git ls-remote --heads --tags`，只认「分支/tag 的 tip」；
+// 而 pnpm 锁的是一个任意 commit，一旦它不再是任何 ref 的 tip，yarn 就报
+//   error Couldn't find match for "<sha>" in "refs/heads/..." for "https://github.com/..."
+// 直接让 install 失败（2026-10-27 CI 就挂在 scratch-vm 的 e5b1731 上）。
+// archive 地址走 HTTP 直取那个 commit 的快照，不依赖 ref，内容与 pnpm 拿到的完全一致。
+//
 // 用法：
 //   node scripts/sync-scratch-deps.mjs                # 从远端拉（CI 用）
 //   node scripts/sync-scratch-deps.mjs --lock <path>  # 用本地 lockfile（离线调试）
@@ -23,6 +30,26 @@ const GUI_BRANCH = 'develop';
 
 /** 合法 npm 包名（含 scope），用于挡住解析异常 */
 const VALID_PACKAGE_NAME = /^(?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/i;
+
+/**
+ * 生成 resolutions 里用的地址（原因见文件头）。
+ * @param {string} owner
+ * @param {string} repo
+ * @param {string} sha
+ * @returns {string}
+ */
+const pinSpec = (owner, repo, sha) => `https://github.com/${owner}/${repo}/archive/${sha}.tar.gz`;
+
+/**
+ * 把历史遗留的 `github:<owner>/<repo>#<40 位 sha>` 归一成 archive 地址。
+ * 只处理「钉死 commit」的形式；`#branch` 这类保持原样。
+ * @param {string} value
+ * @returns {string}
+ */
+const normalizePin = (value) => {
+    const matched = /^github:([^/#\s]+)\/([^/#\s]+)#([0-9a-f]{40})$/i.exec(value);
+    return matched ? pinSpec(matched[1], matched[2], matched[3]) : value;
+};
 
 const argv = process.argv.slice(2);
 const lockArgIndex = argv.indexOf('--lock');
@@ -105,23 +132,31 @@ const parseGitDeps = (lock) => {
 /**
  * 以原始文本方式替换 package.json 里的 resolutions 块，避免 JSON.stringify
  * 重排整个文件、产生无关 diff。
- * @param {string} raw
+ *
+ * 换行符按原文件来：Windows 检出（core.autocrlf=true）下 package.json 是 CRLF，
+ * 若这里只用 '\n' 拼新块，就会写出一个 CRLF/LF 混杂的文件 —— git 会把整份文件
+ * 当成重写（261 行全变），review 时什么也看不出来。
+ * @param {string} rawInput
  * @param {Record<string, string>} resolutions
  * @returns {string}
  */
-const writeResolutions = (raw, resolutions) => {
+const writeResolutions = (rawInput, resolutions) => {
+    const usesCrlf = rawInput.includes('\r\n');
+    const raw = usesCrlf ? rawInput.replace(/\r\n/g, '\n') : rawInput;
+
     const lines = Object.keys(resolutions)
         .sort()
-        .map((name) => `    ${JSON.stringify(name)}: ${JSON.stringify(resolutions[name])}`);
+        .map((name) => `    ${JSON.stringify(name)}: ${JSON.stringify(normalizePin(resolutions[name]))}`);
     const block = `  "resolutions": {\n${lines.join(',\n')}\n  },`;
 
     // 先移除已有的 resolutions 块，保证幂等
     const withoutOld = raw.replace(/\n  "resolutions": \{[\s\S]*?\n  \},/, '');
 
-    if (/\n  "private":/.test(withoutOld)) {
-        return withoutOld.replace(/\n(  "private":)/, `\n${block}\n$1`);
-    }
-    return withoutOld.replace(/\n\}\s*$/, `\n${block}\n}\n`);
+    const out = /\n  "private":/.test(withoutOld)
+        ? withoutOld.replace(/\n(  "private":)/, `\n${block}\n$1`)
+        : withoutOld.replace(/\n\}\s*$/, `\n${block}\n}\n`);
+
+    return usesCrlf ? out.replace(/\n/g, '\r\n') : out;
 };
 
 const main = async () => {
@@ -136,43 +171,61 @@ const main = async () => {
     const pkg = JSON.parse(raw);
     const current = pkg.resolutions || {};
 
-    const wanted = {};
+    // 目标 resolutions（单一真相源）：
+    //   - lockfile 里出现的包，一律按 lockfile 钉死；
+    //   - 其余已有条目保留（可能是针对某个构建问题的人工覆盖，删掉会出事故），
+    //     但写法统一换成 archive 地址 —— 旧的 `github:#sha` 写法同样会让 yarn 挂。
+    const target = {};
+    for (const [name, {owner, repo, sha}] of deps) {
+        target[name] = pinSpec(owner, repo, sha);
+    }
+    for (const [name, value] of Object.entries(current)) {
+        if (!(name in target)) {
+            target[name] = normalizePin(value);
+        }
+    }
+
     const added = [];
     const changed = [];
-    for (const [name, {owner, repo, sha}] of [...deps].sort((a, b) => a[0].localeCompare(b[0]))) {
-        const want = `github:${owner}/${repo}#${sha}`;
-        wanted[name] = want;
-        if (current[name] === want) continue;
-        if (current[name]) {
-            changed.push(`${name}: ${current[name]} -> ${want}`);
+    const reformatted = [];
+    for (const name of Object.keys(target).sort()) {
+        const before = current[name];
+        const after = target[name];
+        if (before === undefined) {
+            added.push(`${name} -> ${after}`);
+        } else if (before === after) {
+            continue;
+        } else if (normalizePin(before) === after) {
+            // 只差写法：也算需要写盘，不能让 --check 放过它
+            reformatted.push(`${name}: 旧 github: 写法 -> archive 地址`);
         } else {
-            added.push(`${name} -> ${want}`);
+            changed.push(`${name}: ${before} -> ${after}`);
         }
     }
 
     if (checkOnly) {
-        if (added.length || changed.length) {
+        if (added.length || changed.length || reformatted.length) {
             console.error('[sync] --check 失败：desktop 的 resolutions 与 scratch-gui 的 lockfile 不一致');
             for (const line of added) console.error(`  + ${line}`);
             for (const line of changed) console.error(`  ~ ${line}`);
+            for (const line of reformatted) console.error(`  ~ ${line}`);
             process.exit(1);
         }
         console.log(`[sync] --check 通过：${deps.size} 个 git 依赖与 scratch-gui 一致`);
         return;
     }
 
-    if (!added.length && !changed.length) {
+    if (!added.length && !changed.length && !reformatted.length) {
         console.log(`[sync] 已与 scratch-gui 一致（${deps.size} 个 git 依赖），无需修改`);
         return;
     }
 
-    // 与已有 resolutions 合并：只增改 lockfile 里出现的包，其余条目原样保留。
-    // 那些可能是人工添加的（例如针对某个构建问题的临时覆盖），删掉会出事故。
-    fs.writeFileSync(PACKAGE_JSON, writeResolutions(raw, {...current, ...wanted}), 'utf-8');
+    fs.writeFileSync(PACKAGE_JSON, writeResolutions(raw, target), 'utf-8');
 
     console.log(`[sync] 已对齐 scratch-gui 的 ${deps.size} 个 git 依赖：`);
     for (const line of added) console.log(`  + ${line}`);
     for (const line of changed) console.log(`  ~ ${line}`);
+    for (const line of reformatted) console.log(`  ~ ${line}`);
 };
 
 main().catch((error) => {
