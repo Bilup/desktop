@@ -235,18 +235,6 @@
     "string": "You may have to restart the application for microphone or camera changes to apply.",
     "developer_comment": "Warning that appears in desktop settings after changing the selected camera or microphone"
   },
-  "desktop-settings.hardware-acceleration-when-available": {
-    "string": "Use graphics acceleration when available (requires restart)",
-    "developer_comment": "Desktop settings option to toggle hardware acceleration/graphics acceleration"
-  },
-  "desktop-settings.hardware-acceleration": {
-    "string": "Use graphics acceleration (requires restart)",
-    "developer_comment": "Desktop settings option to toggle hardware acceleration/graphics acceleration"
-  },
-  "desktop-settings.hardware-acceleration-disabled": {
-    "string": "Disabling graphics acceleration significantly reduces performance. Some projects can run over 100x slower as all rendering will be done by your CPU. This should only be done as a last resort if graphics acceleration is causing crashes.",
-    "developer_comment": "Warning that appears in desktop settings when hardware acceleration/graphics acceleration is disabled"
-  },
   "desktop-settings.background-throttling": {
     "string": "Sleep hidden windows",
     "developer_comment": "Desktop settings option to disable background window throttling"
@@ -270,14 +258,6 @@
   "desktop-settings.exit-fullscreen-on-escape": {
     "string": "Exit F11 fullscreen mode (not the fullscreen button in the editor) when pressing escape",
     "developer_comment": "Refering to when an entire window is in fullscreen by pressing F11 or the maximize button on macOS, not the fullscreen mode you get by pressing the fullscreen button in the editor."
-  },
-  "desktop-settings.rich-presence": {
-    "string": "Enable Rich Presence",
-    "developer_comment": "Option to enable Discord Rich Presence support, which shows the name of the project someone is editing on their Discord profile. For compliance with Scratch policies don't use the word \"Discord\" in the translation."
-  },
-  "desktop-settings.rich-presence-unavailable": {
-    "string": "Rich Presence is not available in this version of the app",
-    "developer_comment": "Appears in desktop settings after a disabled checkbox (grayed out and unchangeable) if Discord Rich Presence can't be enabled."
   },
   "desktop-settings.more-information": {
     "string": "(more information)",
@@ -478,10 +458,6 @@
   "unsafe-path.details": {
     "string": "The file you selected ({file}) is in a folder used internally by {APP_NAME}. It is not safe to save projects here as they can be deleted when the app updates. You must choose a different folder.",
     "developer_comment": "Message of alert that appears when someone tries to save project in a folder used internally by the app. {file} is replaced with the path and {APP_NAME} with the name of the app."
-  },
-  "rich-presence.untitled": {
-    "string": "Untitled Project",
-    "developer_comment": "Appears in Discord rich presence when the current project doesn't have a name."
   },
   "file-access.window-title": {
     "string": "Can't Access Files",

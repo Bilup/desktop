@@ -4,6 +4,7 @@ const AbtractWindow = require('./abstract');
 const settings = require('../settings');
 const askForMediaAccess = require('../media-permissions');
 const SecurityPromptWindow = require('./security-prompt');
+const {getExtensionLibraryRedirect} = require('../extension-library-redirect');
 
 const listLocalFiles = async () => {
   const files = await fsPromises.readdir(path.join(__dirname, '../../dist-library-files/'));
@@ -101,37 +102,11 @@ class ProjectRunningWindow extends AbtractWindow {
 
     // 各扩展库请求始终通过对应的本地协议，由协议层统一处理
     // "云端优先、失败回退本地" 的逻辑（见 src-main/protocols.js 的 remoteFallback）。
-    if (parsed.origin === 'https://extensions.turbowarp.org') {
+    // 映射表集中在 src-main/extension-library-redirect.js，三个窗口共用同一份。
+    const extensionLibraryRedirect = getExtensionLibraryRedirect(details.url);
+    if (extensionLibraryRedirect) {
       return callback({
-        redirectURL: `tw-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://extensions.bilup.org') {
-      return callback({
-        redirectURL: `bl-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://editors.astras.top') {
-      let pathname = parsed.pathname;
-      if (pathname.startsWith('/extensions')) {
-        pathname = pathname.slice('/extensions'.length);
-      }
-      return callback({
-        redirectURL: `ae-extensions://.${pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://extensions.mistium.com') {
-      return callback({
-        redirectURL: `mw-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://sharkpools-extensions.vercel.app') {
-      return callback({
-        redirectURL: `sp-extensions://.${parsed.pathname}`
+        redirectURL: extensionLibraryRedirect
       });
     }
 

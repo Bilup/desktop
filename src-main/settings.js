@@ -21,9 +21,6 @@ const migrateLegacyData = (legacyData) => {
   if (legacyData.bypass_cors === true) {
     options.bypassCORS = true;
   }
-  if (legacyData.hardware_acceleration === false) {
-    options.hardwareAcceleration = false;
-  }
   if (legacyData.background_throttling === false) {
     options.backgroundThrottling = false;
   }
@@ -136,13 +133,6 @@ class Settings {
     this.data.bypassCORS = bypassCORS;
   }
 
-  get hardwareAcceleration () {
-    return this.data.hardwareAcceleration !== false;
-  }
-  set hardwareAcceleration (hardwareAcceleration) {
-    this.data.hardwareAcceleration = hardwareAcceleration;
-  }
-
   /**
    * 是否强制覆盖 Chromium 的 GPU 判断（黑名单 / 光栅化 / 零拷贝 / 首选独显）。
    *
@@ -150,6 +140,9 @@ class Settings {
    * 取舍，在它主动排除的配置上可能带来跨显卡拷贝或已知慢路径，表现是周期性掉到
    * 个位数帧率。只有在确认自己的硬件确实能吃到好处（例如独显笔记本一直落在核显
    * 上）时才打开；改完需要重启。
+   *
+   * 没有 UI：改 `%APPDATA%/bilup-desktop/tw_config.json` 里的
+   * `v2.forceGpuFlags = true` 后重启应用即可。
    */
   get forceGpuFlags () {
     return this.data.forceGpuFlags === true;
@@ -184,13 +177,6 @@ class Settings {
   }
   set exitFullscreenOnEscape(exitFullscreenOnEscape) {
     this.data.exitFullscreenOnEscape = exitFullscreenOnEscape;
-  }
-
-  get richPresence () {
-    return this.data.richPresence === true;
-  }
-  set richPresence (richPresence) {
-    this.data.richPresence = richPresence;
   }
 
   get cloudExtensions () {

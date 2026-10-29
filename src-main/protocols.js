@@ -321,13 +321,19 @@ const memoryCacheSet = (key, data) => {
  * Whether the remote fallback should be attempted right now. After a failed
  * attempt we enter a short cooldown so we don't hammer an unreachable server
  * (and force users to wait for timeouts) on every single request.
+ *
+ * 冷却按 scheme 各记一份。以前是一个全局时间戳：任何一个库（vercel.app 上的
+ * SharkPools 最容易）超时之后，60 秒内**所有**扩展库都不再回源 —— 包括"本地
+ * 缓存里压根没有这个文件、只能靠云端"的情况，那会直接抛 400，表现为点开某个
+ * 扩展就报加载失败，而同一时刻网络其实是通的。
+ * @type {Map<string, number>}
  */
-let remoteFallbackCooldownUntil = 0;
+const remoteFallbackCooldownUntil = new Map();
 const shouldUseRemoteFallback = (metadata) => (
   metadata.remoteFallback &&
   settings.cloudExtensions &&
   net.isOnline() &&
-  Date.now() >= remoteFallbackCooldownUntil
+  Date.now() >= (remoteFallbackCooldownUntil.get(metadata.scheme) || 0)
 );
 
 /**
@@ -490,11 +496,12 @@ const tryFetchRemote = async (metadata, relativePath, localData = null) => {
   const data = await fetchRemoteWithTimeout(url);
   if (!data) {
     // Remote unreachable: fall back to the local cache for a while.
-    remoteFallbackCooldownUntil = Date.now() + 60 * 1000;
+    // 只冷却这个 scheme，别让一个库拖累其它库。
+    remoteFallbackCooldownUntil.set(metadata.scheme, Date.now() + 60 * 1000);
     console.warn(`[extensions] Failed to fetch ${url}, using local cache`);
     return null;
   }
-  remoteFallbackCooldownUntil = 0;
+  remoteFallbackCooldownUntil.delete(metadata.scheme);
 
   // 云端读取成功：若内容与本地缓存不一致，则用云端版本覆盖本地
   // （写入运行时缓存，读取时优先于打包缓存），保证离线时也是最新版本。

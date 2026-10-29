@@ -13,7 +13,6 @@ const {APP_NAME} = require('../brand');
 const prompts = require('../prompts');
 const settings = require('../settings');
 const privilegedFetch = require('../fetch');
-const RichPresence = require('../rich-presence.js');
 const FileAccessWindow = require('./file-access-window.js');
 const ExtensionDocumentationWindow = require('./extension-documentation.js');
 const AbstractWindow = require('./abstract');
@@ -38,8 +37,24 @@ const TYPE_SAMPLE = 'sample';
  */
 const PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS = 20000;
 
+/**
+ * 示例项目默认所在的打包目录（TurboWarp 扩展库的示例）。
+ *
+ * 每个扩展库的示例项目各打包在自己的 dist-* 目录里（见 scripts/prepare-*.mjs 与
+ * @bilup/extensions 的 builder），所以 TYPE_SAMPLE 必须跟着示例来源一起带上目录名：
+ * 曾经这里写死成 dist-extensions，导致 Bilup 扩展卡上的"示例项目"去 TurboWarp 的
+ * 目录里找同名文件，找不到就直接报打开失败。
+ * @const {string}
+ */
+const DEFAULT_SAMPLE_DIRECTORY = 'dist-extensions';
+
 class OpenedFile {
-  constructor (type, path) {
+  /**
+   * @param {string} type
+   * @param {string} path 绝对文件路径或 URL
+   * @param {string} [sampleDirectory] 仅 TYPE_SAMPLE 使用：示例所在的 dist-* 目录名
+   */
+  constructor (type, path, sampleDirectory = DEFAULT_SAMPLE_DIRECTORY) {
     /** @type {TYPE_FILE|TYPE_URL|TYPE_SCRATCH|TYPE_SAMPLE} */
     this.type = type;
 
@@ -48,6 +63,12 @@ class OpenedFile {
      * @type {string}
      */
     this.path = path;
+
+    /**
+     * 仅 TYPE_SAMPLE 使用：示例项目所在的打包目录（相对仓库根目录）。
+     * @type {string}
+     */
+    this.sampleDirectory = sampleDirectory;
   }
 
   async read () {
@@ -79,7 +100,7 @@ class OpenedFile {
     }
 
     if (this.type === TYPE_SAMPLE) {
-      const sampleRoot = path.resolve(__dirname, '../../dist-extensions/samples/');
+      const sampleRoot = path.resolve(__dirname, '../../', this.sampleDirectory, 'samples/');
       const resolvedPath = path.join(sampleRoot, this.path);
       if (resolvedPath.startsWith(sampleRoot)) {
         const compressedPath = `${resolvedPath}.br`;
@@ -131,14 +152,15 @@ const parseOpenedFile = (file, workingDirectory) => {
 
       // Need to manually redirect extension samples to the copies we already have offline as the
       // fetching code will not go through web request handlers or custom protocols.
+      // 目录名要跟着来源走：TurboWarp 的示例在 dist-extensions，Bilup 的在 dist-bilup-extensions。
       const sampleMatch = file.match(/^https?:\/\/extensions\.turbowarp\.org\/samples\/(.+\.sb3)$/);
       if (sampleMatch) {
-        return new OpenedFile(TYPE_SAMPLE, decodeURIComponent(sampleMatch[1]));
+        return new OpenedFile(TYPE_SAMPLE, decodeURIComponent(sampleMatch[1]), 'dist-extensions');
       }
 
       const bilupSampleMatch = file.match(/^https?:\/\/extensions\.bilup\.org\/samples\/(.+\.sb3)$/);
       if (bilupSampleMatch) {
-        return new OpenedFile(TYPE_SAMPLE, decodeURIComponent(bilupSampleMatch[1]));
+        return new OpenedFile(TYPE_SAMPLE, decodeURIComponent(bilupSampleMatch[1]), 'dist-bilup-extensions');
       }
 
       return new OpenedFile(TYPE_URL, file);
@@ -252,8 +274,6 @@ class EditorWindow extends ProjectRunningWindow {
       this.openedFiles.set(this.activeFileId, initialFile);
     }
 
-    this.openedProjectAt = Date.now();
-
     /**
      * @param {string} id
      * @returns {OpenedFile}
@@ -306,21 +326,11 @@ class EditorWindow extends ProjectRunningWindow {
       event.preventDefault();
       if (explicitSet && title) {
         this.window.setTitle(`${title} - ${APP_NAME}`);
-        this.projectTitle = title;
       } else {
         this.window.setTitle(APP_NAME);
-        this.projectTitle = '';
       }
-
-      this.updateRichPresence();
     });
     this.window.setTitle(APP_NAME);
-
-    this.window.on('focus', () => {
-      this.updateRichPresence();
-    });
-
-    this.updateRichPresence();
 
     this.ipc.on('is-initially-fullscreen', (e) => {
       e.returnValue = isInitiallyFullscreen;
@@ -374,7 +384,6 @@ class EditorWindow extends ProjectRunningWindow {
         throw new Error('Not a file');
       }
       this.activeFileId = id;
-      this.openedProjectAt = Date.now();
       this.window.setRepresentedFilename(file.path);
     });
 
@@ -619,13 +628,10 @@ class EditorWindow extends ProjectRunningWindow {
         updateChecker: settings.updateChecker,
         microphone: settings.microphone,
         camera: settings.camera,
-        hardwareAcceleration: settings.hardwareAcceleration,
         backgroundThrottling: settings.backgroundThrottling,
         bypassCORS: settings.bypassCORS,
         spellchecker: settings.spellchecker,
         exitFullscreenOnEscape: settings.exitFullscreenOnEscape,
-        richPresenceAvailable: RichPresence.isAvailable(),
-        richPresence: settings.richPresence,
         cloudExtensions: settings.cloudExtensions,
         isOnline: net.isOnline()
       };
@@ -644,9 +650,6 @@ class EditorWindow extends ProjectRunningWindow {
         case 'camera':
           settings.camera = value;
           break;
-        case 'hardwareAcceleration':
-          settings.hardwareAcceleration = value;
-          break;
         case 'backgroundThrottling':
           settings.backgroundThrottling = value;
           break;
@@ -659,9 +662,6 @@ class EditorWindow extends ProjectRunningWindow {
         case 'exitFullscreenOnEscape':
           settings.exitFullscreenOnEscape = value;
           break;
-        case 'richPresence':
-          settings.richPresence = value;
-          break;
         case 'cloudExtensions':
           settings.cloudExtensions = value;
           break;
@@ -673,13 +673,6 @@ class EditorWindow extends ProjectRunningWindow {
       try {
         if (key === 'backgroundThrottling' || key === 'spellchecker') {
           AbstractWindow.settingsChanged();
-        } else if (key === 'richPresence') {
-          if (value) {
-            RichPresence.enable();
-            this.updateRichPresence();
-          } else {
-            RichPresence.disable();
-          }
         }
       } catch (error) {
         console.error('Failed to apply desktop setting:', key, error);
@@ -727,44 +720,9 @@ class EditorWindow extends ProjectRunningWindow {
       });
     }
 
-    const parsed = new URL(details.url);
-
-    // 各扩展库请求始终通过对应的本地协议，由协议层统一处理
-    // "云端优先、失败回退本地" 的逻辑（见 src-main/protocols.js 的 remoteFallback）。
-    if (parsed.origin === 'https://extensions.turbowarp.org') {
-      return callback({
-        redirectURL: `tw-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://extensions.bilup.org') {
-      return callback({
-        redirectURL: `bl-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://editors.astras.top') {
-      let pathname = parsed.pathname;
-      if (pathname.startsWith('/extensions')) {
-        pathname = pathname.slice('/extensions'.length);
-      }
-      return callback({
-        redirectURL: `ae-extensions://.${pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://extensions.mistium.com') {
-      return callback({
-        redirectURL: `mw-extensions://.${parsed.pathname}`
-      });
-    }
-
-    if (parsed.origin === 'https://sharkpools-extensions.vercel.app') {
-      return callback({
-        redirectURL: `sp-extensions://.${parsed.pathname}`
-      });
-    }
-
+    // 扩展库改写与素材库改写都在 ProjectRunningWindow.onBeforeRequest 里
+    // （映射表：src-main/extension-library-redirect.js）。这里不要重复实现，
+    // 两份实现一旦不完全一致，就会出现"某个来源在编辑器里失效"的问题。
     super.onBeforeRequest(details, callback);
   }
 
@@ -860,10 +818,6 @@ class EditorWindow extends ProjectRunningWindow {
 
   canExitFullscreenByPressingEscape () {
     return !this.isInEditorFullScreen;
-  }
-
-  updateRichPresence () {
-    RichPresence.setActivity(this.projectTitle, this.openedProjectAt);
   }
 
   /**

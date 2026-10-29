@@ -60,13 +60,12 @@ appendFeatures('disable-features', 'CalculateNativeWinOcclusion');
 // https://chromestatus.com/feature/5166674414927872
 // https://chromium.googlesource.com/chromium/src/+/main/docs/gpu/swiftshader.md
 //
-// 注意：这个开关必须无条件打开，不能只在 "用户关掉硬件加速" 时才打开。
+// 注意：这个开关必须无条件打开。
 // 如果显卡被 Chromium 的驱动黑名单拦掉（integrated GPU + 旧驱动很常见），
-// 即使 settings.hardwareAcceleration 为 true，WebGL 也只能回退到软件渲染；
-// 而在 Chrome 139+ 上这个软件兜底默认是关闭的，结果是 WebGL 直接创建失败或
-// 走 CPU 路径，Scratch 渲染器会慢 1~2 个数量级 —— 这正是桌面端比网页端慢的
-// 头号原因之一。网页端用户往往已经升级过 Chrome/驱动，桌面端只能靠这个开关
-// 兜底。
+// WebGL 也只能回退到软件渲染；而在 Chrome 139+ 上这个软件兜底默认是关闭的，
+// 结果是 WebGL 直接创建失败或走 CPU 路径，Scratch 渲染器会慢 1~2 个数量级 ——
+// 这正是桌面端比网页端慢的头号原因之一。网页端用户往往已经升级过 Chrome/驱动，
+// 桌面端只能靠这个开关兜底。
 // 作用是"保证 WebGL 一定有可用后端"，不是"强制走某条路"：硬件加速不可用时它只是
 // 把软件兜底放回可用状态，Chromium 仍然优先用硬件。所以它是安全的，无条件打开。
 app.commandLine.appendSwitch('enable-unsafe-swiftshader');
@@ -85,16 +84,16 @@ app.commandLine.appendSwitch('enable-unsafe-swiftshader');
 //
 // 想强制启用（例如确认独显笔记本一直落在核显上），把设置文件里的
 // `forceGpuFlags` 改成 true 再重启：
-//   %APPDATA%/bilup-desktop/settings.json
-if (settings.hardwareAcceleration) {
-  if (settings.forceGpuFlags) {
-    app.commandLine.appendSwitch('ignore-gpu-blocklist');
-    app.commandLine.appendSwitch('enable-gpu-rasterization');
-    app.commandLine.appendSwitch('enable-zero-copy');
-    app.commandLine.appendSwitch('force_high_performance_gpu');
-  }
-} else {
-  app.disableHardwareAcceleration();
+//   %APPDATA%/bilup-desktop/tw_config.json → "v2": {"forceGpuFlags": true}
+//
+// 硬件加速本身没有开关：不做任何覆盖，Chromium 想用硬件就用硬件，不可用就落到
+// SwiftShader（上面那个 switch 保证了这条路可用）。以前那个"关掉硬件加速"的
+// 选项已经删除，`app.disableHardwareAcceleration()` 不会再被调用。
+if (settings.forceGpuFlags) {
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  app.commandLine.appendSwitch('force_high_performance_gpu');
 }
 
 /**
@@ -144,10 +143,12 @@ if (!settings.backgroundThrottling) {
  * 这些是 AbstractWindow.onBeforeRequest 会重定向的来源：前五个换成对应的扩展库
  * 协议，后三个（Scratch 素材 CDN）在命中本地素材库时换成 tw-library://。
  *
- * ⚠️ **必须与 `src-main/windows/editor.js` 与 `src-main/windows/project-running-window.js`
- * 里的 `parsed.origin === ...` 分支保持一致**：新增一个重定向目标时，这里也要加，
- * 否则那个重定向会因为 filter 不匹配而静默失效。核对用技能
- * `scratch-perf-verify` 里的 `check-webrequest-filter.cjs`（交叉比对两处，不需要编译）。
+ * ⚠️ 扩展库那几个 origin 的改写集中在 `src-main/extension-library-redirect.js`
+ * （`EXTENSION_LIBRARY_ORIGINS`），编辑器 / 运行窗口 / 打包器三个窗口共用；素材库
+ * 的 origin 仍然写在 `src-main/windows/project-running-window.js` 的
+ * `parsed.origin === ...` 里。**新增任何一个重定向目标时，这个数组也必须加**，
+ * 否则那个重定向会因为 filter 不匹配而静默失效。核对用技能 `scratch-perf-verify`
+ * 里的 `check-webrequest-filter.cjs`（交叉比对上面前两处与本节，不需要编译）。
  * @type {string[]}
  */
 const INTERCEPTED_URL_PATTERNS = [

@@ -4,7 +4,6 @@ const {translate} = require('../l10n');
 const {APP_NAME} = require('../brand');
 const settings = require('../settings');
 const {isUpdateCheckerAllowed} = require('../update-checker');
-const RichPresence = require('../rich-presence.js');
 
 class SettingsWindow extends AbstractWindow {
   constructor () {
@@ -18,13 +17,10 @@ class SettingsWindow extends AbstractWindow {
         updateChecker: settings.updateChecker,
         microphone: settings.microphone,
         camera: settings.camera,
-        hardwareAcceleration: settings.hardwareAcceleration,
         backgroundThrottling: settings.backgroundThrottling,
         bypassCORS: settings.bypassCORS,
         spellchecker: settings.spellchecker,
         exitFullscreenOnEscape: settings.exitFullscreenOnEscape,
-        richPresenceAvailable: RichPresence.isAvailable(),
-        richPresence: settings.richPresence,
         cloudExtensions: settings.cloudExtensions,
         isOnline: net.isOnline()
       };
@@ -42,9 +38,6 @@ class SettingsWindow extends AbstractWindow {
         case 'camera':
           settings.camera = value;
           break;
-        case 'hardwareAcceleration':
-          settings.hardwareAcceleration = value;
-          break;
         case 'backgroundThrottling':
           settings.backgroundThrottling = value;
           break;
@@ -57,9 +50,6 @@ class SettingsWindow extends AbstractWindow {
         case 'exitFullscreenOnEscape':
           settings.exitFullscreenOnEscape = value;
           break;
-        case 'richPresence':
-          settings.richPresence = value;
-          break;
         case 'cloudExtensions':
           settings.cloudExtensions = value;
           break;
@@ -71,12 +61,6 @@ class SettingsWindow extends AbstractWindow {
       try {
         if (key === 'backgroundThrottling' || key === 'spellchecker') {
           AbstractWindow.settingsChanged();
-        } else if (key === 'richPresence') {
-          if (value) {
-            RichPresence.enable();
-          } else {
-            RichPresence.disable();
-          }
         }
       } catch (error) {
         console.error('Failed to apply desktop setting:', key, error);
