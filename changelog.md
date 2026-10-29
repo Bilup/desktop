@@ -2,8 +2,15 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.11 (2026-10-29)
+- Bilup is now officially resuming updates.
+- Fix some serious issues
+- Delete some useless settings
+- Add menu animation & now it supports 'Frosted Glass Theme' 
+- Try improve saving speed
+
 # 2.0.10 (2026-10-06)
-- The latest version update of Bilup.
+- The latest version update of Bilup?
 
 # 2.0.9 (2026-09-27)
 - Update 'Frosted Glass Theme'

@@ -1,9 +1,20 @@
 [
   {
+    "version": "2.0.11",
+    "date": "2026-10-29",
+    "notes": [
+      "Bilup is now officially resuming updates.",
+      "Fix some serious issues",
+      "Delete some useless settings",
+      "Add menu animation & now it supports 'Frosted Glass Theme' ",
+      "Try improve saving speed"
+    ]
+  },
+  {
     "version": "2.0.10",
     "date": "2026-10-06",
     "notes": [
-      "The latest version update of Bilup."
+      "The latest version update of Bilup?"
     ]
   },
   {
