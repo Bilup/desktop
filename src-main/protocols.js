@@ -1,10 +1,11 @@
 const path = require('path');
 const os = require('os');
-const zlib = require('zlib');
 const nodeURL = require('url');
 const {app, protocol, net} = require('electron');
 const {getDist, getPlatform} = require('./platform');
 const settings = require('./settings');
+// 全仓库唯一的 Brotli 编解码入口（见 src-main/brotli.js）
+const {decompress: brotliDecompress, compress: brotliCompress} = require('./brotli');
 const packageJSON = require('../package.json');
 
 /**
@@ -197,31 +198,6 @@ protocol.registerSchemesAsPrivileged(Object.entries(FILE_SCHEMES).map(([scheme, 
   }
 })));
 
-/**
- * Promisified zlib.brotliDecompress
- */
-const brotliDecompress = (input) => new Promise((resolve, reject) => {
-  zlib.brotliDecompress(input, (error, result) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(result);
-    }
-  });
-});
-
-/**
- * Promisified zlib.brotliCompress
- */
-const brotliCompress = (input) => new Promise((resolve, reject) => {
-  zlib.brotliCompress(input, (error, result) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(result);
-    }
-  });
-});
 
 /**
  * Directory where files downloaded from the remote fallback are cached so

@@ -1,13 +1,13 @@
 const fsPromises = require('fs/promises');
 const path = require('path');
 const nodeURL = require('url');
-const zlib = require('zlib');
 const nodeCrypto = require('crypto');
 const {app, dialog, shell, net} = require('electron');
 const ProjectRunningWindow = require('./project-running-window');
 const PackagerWindow = require('./packager');
 const SettingsWindow = require('./settings');
 const {createAtomicWriteStream, writeFileAtomic} = require('../atomic-write-stream');
+const {decompress: brotliDecompress} = require('../brotli');
 const {translate, updateLocale, getStrings} = require('../l10n');
 const {APP_NAME} = require('../brand');
 const prompts = require('../prompts');
@@ -107,15 +107,7 @@ class OpenedFile {
         const compressedData = await fsPromises.readFile(compressedPath);
 
         // dist-extensions is all brotli'd; must decompress
-        const decompressedData = await new Promise((resolve, reject) => {
-          zlib.brotliDecompress(compressedData, (err, res) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(res);
-            }
-          });
-        });
+        const decompressedData = await brotliDecompress(compressedData);
 
         return {
           name: this.path,
