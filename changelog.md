@@ -2,6 +2,11 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.0.12 (2026-10-30)
+- Update Electron to 43.8.4 with the latest security fixes
+- Improve safety when loading extensions
+- Linux: fix missing window controls on Ubuntu 24.04 Wayland
+
 # 2.0.11 (2026-10-29)
 - Bilup is now officially resuming updates.
 - Fix some serious issues
