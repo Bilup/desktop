@@ -125,3 +125,23 @@ patchFile(
     }
   }]
 );
+
+// Patch 5: settings-modal.jsx - let desktop use the window style picker.
+//
+// WindowStyleSelect refuses to render the picker whenever `window.EditorPreload`
+// exists and prints "Cannot set custom window styling on desktop" instead. The
+// window-style CSS only targets the in-editor window system (.addon-window),
+// which desktop renders in-page anyway (see window-manager.js canUseNativeWindows),
+// so the guard removes the setting without any functional reason. Dropping the
+// guard makes desktop share the exact same picker as the web build.
+patchFile(
+  'node_modules/scratch-gui/src/components/tw-settings-modal/settings-modal.jsx',
+  'settings-modal.jsx',
+  [{
+    test: (c) => /const WindowStyleSelect = props => \{\s*if \(typeof window\.EditorPreload !== 'undefined'\) \{[\s\S]*?\n    \}\s*return \(/m.test(c),
+    apply: (c) => c.replace(
+      /const WindowStyleSelect = props => \{\s*if \(typeof window\.EditorPreload !== 'undefined'\) \{[\s\S]*?\n    \}\s*return \(/m,
+      'const WindowStyleSelect = props => {\n    return ('
+    )
+  }]
+);
