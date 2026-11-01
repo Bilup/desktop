@@ -106,11 +106,15 @@ if (settings.forceGpuFlags) {
  * full GC 频率**（表现是周期性卡顿、帧率掉到个位数），再往上就是
  * "JavaScript heap out of memory"，直接崩掉渲染进程。
  *
- * 这里按物理内存给一个更宽松的上限（40%；下限保持 Chromium 的默认值 —— 收紧只会让
+ * 这里按物理内存给一个更宽松的上限（30%；下限保持 Chromium 的默认值 —— 收紧只会让
  * GC 更频繁；上限是 V8 在 64 位下的 4GB）：
  *   4GB 内存  -> 2048MB（等于默认）
- *   8GB 内存  -> 3276MB
+ *   8GB 内存  -> 2457MB
  *   16GB 以上 -> 4096MB
+ *
+ * 不用 40% 的原因：8GB 机器上 40% 会让单个渲染进程合法长到 3.2GB；同时开多个编辑器
+ * 窗口时每个进程都有各自的上限，很容易把整机推进换页。需要更大上限的用户可以通过
+ * 环境变量 BILUP_RENDERER_HEAP_LIMIT_MB 临时放宽（范围 2048~4096）。
  *
  * 它只是**上限**、不是预分配：普通项目仍然只用几百 MB，V8 需要时才增长。作用是内存
  * 充裕时不要提前进入剧烈 GC，内存紧张时也不至于被一个过小的天花板逼死在 OOM 上。
@@ -119,7 +123,12 @@ if (settings.forceGpuFlags) {
  * `performance.memory.jsHeapSizeLimit`）—— 那是唯一能直接读出这个上限的地方。
  */
 const totalMemoryMB = Math.floor(os.totalmem() / (1024 * 1024));
-const RENDERER_HEAP_LIMIT_MB = Math.min(4096, Math.max(2048, Math.floor(totalMemoryMB * 0.4)));
+const requestedHeapLimitMB = Number.parseInt(process.env.BILUP_RENDERER_HEAP_LIMIT_MB, 10);
+const RENDERER_HEAP_LIMIT_MB = (
+  Number.isFinite(requestedHeapLimitMB) && requestedHeapLimitMB >= 2048
+    ? Math.min(4096, requestedHeapLimitMB)
+    : Math.min(4096, Math.max(2048, Math.floor(totalMemoryMB * 0.3)))
+);
 app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${RENDERER_HEAP_LIMIT_MB}`);
 
 // 用户关闭后台节流时，光靠 webContents.setBackgroundThrottling(false) 只能解除

@@ -5,7 +5,7 @@ const {app, protocol, net} = require('electron');
 const {getDist, getPlatform} = require('./platform');
 const settings = require('./settings');
 // 全仓库唯一的 Brotli 编解码入口（见 src-main/brotli.js）
-const {decompress: brotliDecompress, compress: brotliCompress} = require('./brotli');
+const {decompress: brotliDecompress, compress: brotliCompress, MAX_INPUT_BYTES} = require('./brotli');
 const packageJSON = require('../package.json');
 
 /**
@@ -341,6 +341,15 @@ const toRemoteFallbackURL = (baseURL, relativePath) => {
 const REMOTE_FETCH_TIMEOUT_MS = 5000;
 
 /**
+ * 云端回退响应体的上限（未压缩大小）。
+ *
+ * 回退源是外部服务器；即使正常文件很小，也不能假设它一定返回合理大小。
+ * 用与 Brotli 输入相同的 64MB 上限，超过即视为异常响应并回退本地缓存，
+ * 避免 `chunks` + `Buffer.concat` 把主进程内存按响应大小无上限放大。
+ */
+const REMOTE_RESPONSE_MAX_BYTES = MAX_INPUT_BYTES;
+
+/**
  * Fetch a single file from the remote fallback with a timeout.
  *
  * This promise is guaranteed to settle (with Buffer or null) no matter what
@@ -393,7 +402,22 @@ const fetchRemoteWithTimeout = (url, timeoutMs = REMOTE_FETCH_TIMEOUT_MS) => new
       return;
     }
     const chunks = [];
-    response.on('data', chunk => chunks.push(chunk));
+    let receivedBytes = 0;
+    response.on('data', (chunk) => {
+      if (settled) {
+        return;
+      }
+      receivedBytes += chunk.length;
+      if (receivedBytes > REMOTE_RESPONSE_MAX_BYTES) {
+        // 超限：丢弃已收内容并终止连接，由调用方回退本地缓存。
+        chunks.length = 0;
+        request.destroy();
+        console.warn(`[extensions] Remote response too large: ${url}`);
+        finish(null);
+        return;
+      }
+      chunks.push(chunk);
+    });
     response.on('end', () => finish(Buffer.concat(chunks)));
     // 服务器在响应体传完之前断开连接：同样结束等待，回退本地缓存
     response.on('error', () => finish(null));
@@ -918,6 +942,17 @@ const EDITOR_CRITICAL_PATHS = [
 const PREWARM_MAX_BYTES = MEMORY_CACHE_MAX_BYTES;
 
 /**
+ * 第二阶段（static 下的积木图标/字体等零碎文件）的独立预算。
+ *
+ * 这些文件不是首屏必需的。如果和第一阶段共用整个缓存预算，启动 2.5 秒后主进程
+ * 会迅速把缓存灌满，和首屏/项目加载争抢物理内存。给它们四分之一预算即可。
+ */
+const PREWARM_STATIC_MAX_BYTES = Math.floor(PREWARM_MAX_BYTES / 4);
+
+/** 第二阶段跳过体积较大的文件，只预热真正零碎的小资源。 */
+const PREWARM_STATIC_MAX_FILE_BYTES = 512 * 1024;
+
+/**
  * 预热时的并发度。太高会跟真正要用的请求抢磁盘队列，反而拖慢首屏。
  */
 const PREWARM_CONCURRENCY = 6;
@@ -944,9 +979,8 @@ const prewarmEditorAssets = () => {
   }
   const root = path.join(metadata.root, '/');
   const fsPromises = require('fs/promises');
-  let budget = PREWARM_MAX_BYTES;
 
-  const warmOne = async (relativePath) => {
+  const warmOne = async (relativePath, budgetState, maxFileBytes) => {
     const key = memoryCacheKey(metadata.scheme, relativePath);
     if (memoryCacheGet(key)) {
       return 0;
@@ -957,10 +991,10 @@ const prewarmEditorAssets = () => {
     }
     try {
       const data = await fsPromises.readFile(absolutePath);
-      if (data.length > budget) {
+      if (data.length > maxFileBytes || data.length > budgetState.remaining) {
         return 0;
       }
-      budget -= data.length;
+      budgetState.remaining -= data.length;
       memoryCacheSet(key, data);
       return data.length;
     } catch (error) {
@@ -969,11 +1003,11 @@ const prewarmEditorAssets = () => {
     }
   };
 
-  const warmMany = async (relativePaths) => {
+  const warmMany = async (relativePaths, budgetState, maxFileBytes = Infinity) => {
     const queue = relativePaths.slice();
     const workers = new Array(Math.min(PREWARM_CONCURRENCY, queue.length)).fill(null).map(async () => {
-      while (queue.length > 0 && budget > 0) {
-        await warmOne(queue.shift());
+      while (queue.length > 0 && budgetState.remaining > 0) {
+        await warmOne(queue.shift(), budgetState, maxFileBytes);
       }
     });
     await Promise.all(workers);
@@ -1000,7 +1034,8 @@ const prewarmEditorAssets = () => {
   };
 
   // 第一阶段：首屏真正要等的几个文件，立刻开始，和窗口构造并行。
-  warmMany(EDITOR_CRITICAL_PATHS).then(() => {
+  // 预算只属于第一阶段；第二阶段有更小的独立预算（见 PREWARM_STATIC_MAX_BYTES）。
+  warmMany(EDITOR_CRITICAL_PATHS, {remaining: PREWARM_MAX_BYTES}).then(() => {
     console.log(`[prewarm] editor critical assets ready (${memoryCacheBytes} bytes cached)`);
   }).catch(() => {});
 
@@ -1008,7 +1043,11 @@ const prewarmEditorAssets = () => {
   // 它们的价值在于把"打开积木面板时集中爆发的一串小请求"从读盘变成命中内存。
   const staticTimer = setTimeout(() => {
     collectStaticPaths(path.join(metadata.root, 'static'), 'static/')
-      .then((paths) => warmMany(paths))
+      .then((paths) => warmMany(
+        paths,
+        {remaining: PREWARM_STATIC_MAX_BYTES},
+        PREWARM_STATIC_MAX_FILE_BYTES
+      ))
       .then(() => {
         console.log(`[prewarm] editor static assets scanned (${memoryCacheBytes} bytes cached)`);
       })

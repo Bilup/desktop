@@ -48,6 +48,8 @@ class WrappedFileWritable {
           handlers.reject(error);
         }
         this._callbacks.clear();
+        this._dispose();
+        return;
       }
 
       const response = data.response;
@@ -69,9 +71,27 @@ class WrappedFileWritable {
     }, window.origin, [this._channel.port2])
   }
 
+  /**
+   * Close the MessagePort and drop pending callbacks.
+   * Called after close()/abort() or when the main process reports an error, so a
+   * finished writable doesn't keep a live port and its message handler around.
+   */
+  _dispose () {
+    if (!this._channel) {
+      return;
+    }
+    this._callbacks.clear();
+    this._channel.port1.onmessage = null;
+    this._channel.port1.close();
+    this._channel = null;
+  }
+
   _sendToMainAndWait (message) {
     if (this._error) {
       throw this._error;
+    }
+    if (!this._channel) {
+      throw new Error('Write stream is closed');
     }
 
     const messageId = this._lastMessageId++;
@@ -95,12 +115,14 @@ class WrappedFileWritable {
     await this._sendToMainAndWait({
       finish: true
     });
+    this._dispose();
   }
 
   async abort () {
     await this._sendToMainAndWait({
       abort: true
     });
+    this._dispose();
   }
 }
 

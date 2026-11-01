@@ -38,6 +38,15 @@ const TYPE_SAMPLE = 'sample';
 const PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS = 20000;
 
 /**
+ * 每个编辑器窗口最多保留的文件句柄数量。
+ *
+ * 渲染进程同一时刻只使用 activeFileId，但每次打开/另存都会生成一个新句柄。
+ * 这里只保留最近若干个，避免长时间编辑后 Map 无上限增长、旧句柄永久有效。
+ * @const {number}
+ */
+const MAX_OPENED_FILE_IDS = 8;
+
+/**
  * 示例项目默认所在的打包目录（TurboWarp 扩展库的示例）。
  *
  * 每个扩展库的示例项目各打包在自己的 dist-* 目录里（见 scripts/prepare-*.mjs 与
@@ -261,6 +270,24 @@ class EditorWindow extends ProjectRunningWindow {
     this.openedFiles = new Map();
     this.activeFileId = null;
 
+    /**
+     * 把句柄数量压回上限。优先保留当前活动文件，其余按插入顺序淘汰最旧的。
+     * Map 在迭代中删除当前键是安全的。
+     */
+    const pruneOpenedFiles = () => {
+      if (this.openedFiles.size <= MAX_OPENED_FILE_IDS) {
+        return;
+      }
+      for (const id of this.openedFiles.keys()) {
+        if (this.openedFiles.size <= MAX_OPENED_FILE_IDS) {
+          break;
+        }
+        if (id !== this.activeFileId) {
+          this.openedFiles.delete(id);
+        }
+      }
+    };
+
     if (initialFile !== null) {
       this.activeFileId = generateFileId();
       this.openedFiles.set(this.activeFileId, initialFile);
@@ -377,6 +404,7 @@ class EditorWindow extends ProjectRunningWindow {
       }
       this.activeFileId = id;
       this.window.setRepresentedFilename(file.path);
+      pruneOpenedFiles();
     });
 
     this.ipc.handle('closed-file', () => {
@@ -405,6 +433,7 @@ class EditorWindow extends ProjectRunningWindow {
 
       const id = generateFileId();
       this.openedFiles.set(id, new OpenedFile(TYPE_FILE, filePath));
+      pruneOpenedFiles();
 
       return {
         id,
@@ -448,6 +477,7 @@ class EditorWindow extends ProjectRunningWindow {
 
       const id = generateFileId();
       this.openedFiles.set(id, new OpenedFile(TYPE_FILE, filePath));
+      pruneOpenedFiles();
 
       return {
         id,

@@ -73,6 +73,7 @@ class CloudProvider {
   requestCloseConnection () {
     if (this._channel) {
       this._channel.removeEventListener('message', this._handleMessage);
+      this._channel.close();
       this._channel = null;
     }
   }

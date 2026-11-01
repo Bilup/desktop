@@ -64,6 +64,19 @@ const megabytes = (bytes) => `${Math.round(bytes / (1024 * 1024))}MB`;
 const lastRendererHeap = new Map();
 
 /**
+ * 窗口关闭时丢掉它的堆采样记录。
+ *
+ * 记录只在崩溃上报时才被删除；正常关闭的窗口如果没有这一步，会让 Map 随
+ * webContents 数量一直增长。
+ * @param {number} webContentsId
+ */
+const forgetRendererHeap = (webContentsId) => {
+  if (typeof webContentsId === 'number') {
+    lastRendererHeap.delete(webContentsId);
+  }
+};
+
+/**
  * 建议的渲染进程 V8 老生代上限（MB）。
  *
  * 与 `index.js` 里设置 `--js-flags=--max-old-space-size` 用的是**同一个公式**，
@@ -73,7 +86,12 @@ const lastRendererHeap = new Map();
  */
 const suggestedHeapLimitMB = () => {
   const totalMB = Math.floor(os.totalmem() / (1024 * 1024));
-  return Math.min(4096, Math.max(2048, Math.floor(totalMB * 0.4)));
+  // 与 index.js 相同的环境变量覆盖逻辑；测试大项目时可临时放宽。
+  const requested = Number.parseInt(process.env.BILUP_RENDERER_HEAP_LIMIT_MB, 10);
+  if (Number.isFinite(requested) && requested >= 2048) {
+    return Math.min(4096, requested);
+  }
+  return Math.min(4096, Math.max(2048, Math.floor(totalMB * 0.3)));
 };
 
 /**
@@ -163,12 +181,22 @@ const recordRendererHeap = async (webContents) => {
  * @param {number} delay
  */
 const scheduleRendererHeapSample = (window, delay) => {
-  setTimeout(() => {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+  const webContentsId = window.webContents.id;
+  const timer = setTimeout(() => {
     if (!window || window.isDestroyed()) {
       return;
     }
     recordRendererHeap(window.webContents);
   }, delay);
+
+  // 窗口关闭后立即清理：既去掉 Map 里的记录，也让定时器不再继续持有窗口对象。
+  window.once('closed', () => {
+    clearTimeout(timer);
+    forgetRendererHeap(webContentsId);
+  });
 };
 
 /**
@@ -636,6 +664,7 @@ const recordEnvironment = async () => {
 
 module.exports = {
   bootMark,
+  forgetRendererHeap,
   log,
   logError,
   recordCrash,
