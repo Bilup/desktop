@@ -3,11 +3,13 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
 # 2.0.12 (2026-10-30)
+
 - Update Electron to 43.8.4 with the latest security fixes
 - Improve safety when loading extensions
 - Linux: fix missing window controls on Ubuntu 24.04 Wayland
 
 # 2.0.11 (2026-10-29)
+
 - Bilup is now officially resuming updates.
 - Fix some serious issues
 - Delete some useless settings
@@ -15,82 +17,100 @@ Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **form
 - Try improve saving speed
 
 # 2.0.10 (2026-10-06)
+
 - The latest version update of Bilup?
 
 # 2.0.9 (2026-09-27)
+
 - Update 'Frosted Glass Theme'
 - Update 'Find-bar' & 'Spotlight'
 - Improve the performance
 - Fix some known issues
 
 # 2.0.8 (2026-09-21)
+
 - Emergency fix for a critical issue: cann't loading local assets
 
 # 2.0.7 (2026-09-19)
+
 - Big update for Git
 - Fix some issues about 'Frosted Glass Theme'
 - Fix some issues about 'Debugger'
 - Add 'Custom addons'
 
 # 2.0.6 (2026-09-17)
+
 - Try improve performance
 - Fix some known issues
 
 # 2.0.5 (2026-09-13)
+
 - Emergency fix for a critical issue: the variable display isn't changing.
 - Fix some translations issues
 
 # 2.0.4 (2026-09-07)
+
 - Add 'Frosted Glass Theme'
 - Fix some issues about theme
 - Delete Addons "novatheai"
 
 # 2.0.3 (2026-08-22)
+
 - Fix an issue: unable to adjust local settings
 - Fix an issue about sandbox
 - Add "Global custom block"
 - Update the style of sprite/costume/background/sound selection
 
 # 2.0.2 (2026-08-15)
+
 - Update "Custom Extensions Library"
 - Emergency fix some issues: unable to use custom fonts; unable to close settings about "Windows Animations"
 
 # 2.0.1 (2026-08-12)
+
 - Fix extension libraries(Sharkpool) not working in local.
 - Fix some translation issues.
 - Update extensions-manager
 
 # 2.0.0 (2026-08-09)
+
 - Big update is available! Now use the newest Bilup to create projects!
 - Fix some known issues
 - Improve the performance
 
 # 1.6.1 (2026-07-11)
+
 - Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)
 - Fix some translation issues
 - Fix some known issues
 
 # 1.6.0 (2026-07-10)
+
 - Big update (from MistWarp)
 
 # 1.5.4 (2026-07-05)
+
 - Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)
 - Fix some issues with live collaboration
 - Update window animations
 - Add 'Custom Extensions Library'
 
 # 1.5.3 (2026-06-24)
+
 - Fix some known issues
 - Update markdown
 - Update shortcuts manager
 
 # 1.5.2 (2026-06-09)
+
 - Desktop: Fix extension libraries not working in local
 
 # 1.5.1 (2026-06-05)
+
 - Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)
 
 # 1.5.0 (2026-05-23)
+
 - Fix some known issues
 - Bilup Nova is now available! Now use AI Agents to help you create projects!
 - Add support for `api.yearnstudio.cn`
