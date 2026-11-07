@@ -17,11 +17,12 @@
     "electron:start": "electron src-main/entrypoint.js",
     "electron:package:dir": "electron-builder --dir",
     "deploy": "node scripts/deploy.mjs",
-    "deploy:watch": "node scripts/deploy.mjs --watch"
+    "deploy:watch": "node scripts/deploy.mjs --watch",
+    "size:report": "node scripts/report-bundle-size.mjs",
+    "assets:optimize": "node scripts/optimize-library-assets.mjs"
   },
   "dependencies": {
-    "semver": "^7.7.3",
-    "node-fetch": "^3.3.2"
+    "semver": "^7.7.3"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

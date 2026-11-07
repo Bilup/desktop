@@ -162,6 +162,48 @@ MIME_TYPES.set('.zip', 'application/zip');
 MIME_TYPES.set('.xml', 'text/xml');
 MIME_TYPES.set('.md', 'text/markdown');
 
+/**
+ * 按文件魔数修正 content-type。
+ *
+ * 背景：素材库的文件名必须保持原样——scratch-storage 用
+ * `assets.scratch.mit.edu/<md5>.<ext>` 拼 URL，扩展名来自项目文件本身，
+ * 改了就 404。而 scripts/optimize-library-assets.mjs 会在构建期把
+ * png 转成 WebP、wav 转成 Opus/FLAC 以减小包体，于是会出现
+ * "文件名是 .png、内容其实是 WebP" 这种情况。
+ *
+ * 浏览器对 image/* 和 decodeAudioData 都能 sniff 实际格式，理论上不改也能用；
+ * 但显式给出正确的 content-type 不依赖这种宽容行为，也便于排查。
+ *
+ * 只认几个明确的魔数，其余一律返回扩展名推断的结果。
+ *
+ * @param {Buffer|Uint8Array|null|undefined} data
+ * @param {string} fallback 按扩展名得到的 content-type
+ * @returns {string}
+ */
+const sniffContentType = (data, fallback) => {
+  if (!data || data.length < 12) {
+    return fallback;
+  }
+  // WebP: "RIFF" + 4 字节长度 + "WEBP"
+  if (data[0] === 0x52 && data[1] === 0x49 && data[2] === 0x46 && data[3] === 0x46 &&
+      data[8] === 0x57 && data[9] === 0x45 && data[10] === 0x42 && data[11] === 0x50) {
+    return 'image/webp';
+  }
+  // Ogg（Opus / Vorbis）: "OggS"
+  if (data[0] === 0x4f && data[1] === 0x67 && data[2] === 0x67 && data[3] === 0x53) {
+    return 'audio/ogg';
+  }
+  // FLAC: "fLaC"
+  if (data[0] === 0x66 && data[1] === 0x4c && data[2] === 0x61 && data[3] === 0x43) {
+    return 'audio/flac';
+  }
+  // PNG: 89 50 4E 47
+  if (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47) {
+    return 'image/png';
+  }
+  return fallback;
+};
+
 protocol.registerSchemesAsPrivileged(Object.entries(FILE_SCHEMES).map(([scheme, metadata]) => ({
   scheme,
   privileges: {
@@ -734,23 +776,24 @@ const createModernProtocolHandler = (metadata) => {
         return createErrorResponse(new Error(`Invalid file extension: ${fileExtension}`));
       }
 
-      const headers = {
-        ...baseHeaders,
-        'content-type': mimeType
-      };
-
       const relativePath = resolved.slice(root.length);
 
       if (metadata.brotli) {
         const data = await resolveBrotliData(metadata, relativePath);
         return new Response(data, {
-          headers
+          headers: {
+            ...baseHeaders,
+            'content-type': sniffContentType(data, mimeType)
+          }
         });
       }
 
       const fileData = await resolvePlainFileData(metadata, relativePath, resolved);
       return new Response(fileData, {
-        headers
+        headers: {
+          ...baseHeaders,
+          'content-type': sniffContentType(fileData, mimeType)
+        }
       });
     } catch (error) {
       return createErrorResponse(error);
@@ -817,7 +860,7 @@ const createLegacyBrotliProtocolHandler = (metadata) => {
         data,
         headers: {
           ...baseHeaders,
-          'content-type': mimeType
+          'content-type': sniffContentType(data, mimeType)
         }
       });
     } catch (error) {
