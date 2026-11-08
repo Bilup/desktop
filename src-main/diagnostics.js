@@ -139,9 +139,14 @@ const recordRendererHeap = async (webContents) => {
 
   const limitMB = Math.round(sample.limit / (1024 * 1024));
   const usedMB = Math.round(sample.used / (1024 * 1024));
+  // `totalHeapSize` 在 Electron 43 上可能缺失（不是数字），直接参与除法会写出
+  // "total NaNMB" —— 日志里出现一个假数字比不写更糟，这里明确区分两种情况。
+  const totalMB = typeof sample.total === 'number' && Number.isFinite(sample.total) ?
+    `${Math.round(sample.total / (1024 * 1024))}MB` :
+    'unavailable';
   const line = [
     `limit ${limitMB}MB`,
-    `total ${Math.round(sample.total / (1024 * 1024))}MB`,
+    `total ${totalMB}`,
     `used ${usedMB}MB`,
     `${(usedMB / limitMB * 100).toFixed(1)}% of limit`
   ].join(' | ');
@@ -527,7 +532,16 @@ const GRAPHICS_PROBE = `(() => {
   };
   try {
     const strict = document.createElement('canvas');
-    out.caveatBlocked = !strict.getContext('webgl', {failIfMajorPerformanceCaveat: true});
+    const strictGl = strict.getContext('webgl', {failIfMajorPerformanceCaveat: true});
+    out.caveatBlocked = !strictGl;
+    // 这个上下文同样要显式释放：探针只问一次"能不能建"，但 WebGL 上下文在
+    // GPU 进程里是有实体资源的（默认帧缓冲 + 驱动侧状态，部分驱动上是几十 MB），
+    // 而且在同一页面里和 scratch-render 抢同一个上下文池。不释放就等于整个
+    // session 一直多养一个我们用不到的上下文 —— 探针本身不该有这种副作用。
+    if (strictGl) {
+      const strictLose = strictGl.getExtension('WEBGL_lose_context');
+      if (strictLose) strictLose.loseContext();
+    }
   } catch (error) {
     out.caveatBlocked = null;
   }
@@ -671,5 +685,8 @@ module.exports = {
   recordEnvironment,
   recordRendererHeap,
   recordStartupProfile,
-  scheduleRendererHeapSample
+  scheduleRendererHeapSample,
+  // 给其它模块（见 memory-trace.js）用的原始写入口：它们有自己的一行格式，
+  // 不适合再复制一份 log/logError 的语义。
+  writeLine: write
 };

@@ -105,6 +105,84 @@ const securityManager = {
 const USERNAME_KEY = 'tw:username';
 const DEFAULT_USERNAME = 'player';
 
+/**
+ * 估算这个作品本身需要多少内存（运行期实际会占用的量级，不是文件体积）。
+ *
+ * 为什么需要：`.sb3` 的体积和它加载后吃掉的内存相差一到两个数量级，而用户看到的是
+ * 后者。两个放大源都很彻底：
+ *   - **服装纹理**：scratch-render 把每张位图上传成 RGBA 纹理，显存/内存占用是
+ *     `宽 × 高 × 4` 字节（位图服装还要按 bitmapResolution=2 算，即长宽各乘 2）。
+ *     一张 300KB 的 PNG 如果画布是 1080×1080，纹理就是 1080×2×1080×2×4 ≈ 18MB。
+ *   - **声音 PCM**：加载时每个声音都会被解码成 float32 PCM（`sampleCount × 4` 字节），
+ *     44.1kHz 下每秒约 176KB —— 五分钟的音乐约 52MB，一小时约 634MB。
+ *
+ * 把这两个数字（加上服装/声音/积木的条数）跟进程内存放在同一条日志里，才能判断
+ * "8GB 是这个作品真的需要，还是哪里在重复持有"。
+ *
+ * 只做算术，不解码、不复制数据，耗时是一次遍历（几千个对象量级）。
+ * @param {object} vm scratch-vm 实例
+ * @returns {object} 供主进程日志使用的统计
+ */
+const estimateProjectFootprint = (vm) => {
+    const runtime = vm && vm.runtime;
+    if (!runtime || !Array.isArray(runtime.targets)) {
+        return null;
+    }
+
+    let sprites = 0;
+    let costumes = 0;
+    let texels = 0;
+    let sounds = 0;
+    let pcmBytes = 0;
+    let blocks = 0;
+    let assetBytes = 0;
+
+    for (const target of runtime.targets) {
+        const sprite = target.sprite;
+        if (!sprite) {
+            continue;
+        }
+        if (target.isOriginal) {
+            sprites++;
+        }
+        for (const costume of (sprite.costumes || [])) {
+            costumes++;
+            // size 是"服装单位"下的尺寸，纹理按 bitmapResolution 分配 texel。
+            const resolution = costume.bitmapResolution || 1;
+            const width = costume.size && costume.size[0] ? costume.size[0] : 0;
+            const height = costume.size && costume.size[1] ? costume.size[1] : 0;
+            texels += Math.round(width * resolution) * Math.round(height * resolution);
+            if (costume.asset && costume.asset.data && costume.asset.data.length) {
+                assetBytes += costume.asset.data.length;
+            }
+        }
+        for (const sound of (sprite.sounds || [])) {
+            sounds++;
+            pcmBytes += (sound.sampleCount || 0) * 4;
+            if (sound.asset && sound.asset.data && sound.asset.data.length) {
+                assetBytes += sound.asset.data.length;
+            }
+        }
+        if (target.blocks && target.blocks._blocks) {
+            blocks += Object.keys(target.blocks._blocks).length;
+        }
+    }
+
+    const toMB = (bytes) => Math.round(bytes / (1024 * 1024));
+
+    return {
+        sprites,
+        costumes,
+        // 一张纹理按 RGBA 4 字节/texel 估算；实际还会因为缩放级别额外生成缩略纹理。
+        textureMB: toMB(texels * 4),
+        sounds,
+        soundMB: toMB(pcmBytes),
+        blocks,
+        // 压缩后的原始素材字节数，用来对比上面的放大幅度。
+        assetMB: toMB(assetBytes)
+    };
+};
+
 const DesktopHOC = function (WrappedComponent) {
   class DesktopComponent extends React.Component {
     constructor (props) {
@@ -162,6 +240,15 @@ const DesktopHOC = function (WrappedComponent) {
         await this.props.vm.loadProject(data);
         this.props.onLoadingCompleted();
         this.props.onLoadedProject(this.props.loadingState, true);
+
+        // 把体积估算挂到 window 上，供主进程的内存采样一起写进诊断日志
+        // （见 src-main/memory-trace.js 的 readRendererHeap）。只有几个数字，
+        // 不持有任何 VM 对象，也不会影响 GC。
+        try {
+          window.__bilupProjectStats = estimateProjectFootprint(this.props.vm);
+        } catch (error) {
+          // 统计失败不影响加载
+        }
 
         const title = getDefaultProjectTitle(name);
         if (title) {

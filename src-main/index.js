@@ -129,7 +129,26 @@ const RENDERER_HEAP_LIMIT_MB = (
     ? Math.min(4096, requestedHeapLimitMB)
     : Math.min(4096, Math.max(2048, Math.floor(totalMemoryMB * 0.3)))
 );
-app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${RENDERER_HEAP_LIMIT_MB}`);
+
+/**
+ * 为什么顺带打开 `--expose-gc`。
+ *
+ * 上面那个更大的上限解决的是"别在几 GB 的堆上疯狂 GC"，但它同时带来一个副作用：
+ * V8 判断"该不该回收"的依据是**离上限还有多远**，上限抬到 4GB 之后，加载一个大作品
+ * 时产生的那几百 MB 中间数据（JSZip 解压缓冲、每张位图解码出来的 ImageBitmap、
+ * ProjectAssetLoad 按 md5 缓存的 image/sound promise）会一直留着不回收，直到堆真的
+ * 逼近 4GB 才触发 full GC —— 任务管理器里看到的就是"打开一个作品常驻 8GB"。
+ *
+ * 与其把上限收回去（那会重新引出"大项目 OOM 崩溃 + 频繁 GC 卡顿"），不如保留上限、
+ * 在**确实知道垃圾已经产生**的时刻主动回收一次：加载完成 8 秒后调用
+ * `gc({execution: 'async'})`（见 src-main/memory-trace.js 的 releaseTransients）。
+ * 异步 GC 不阻塞界面，回收量会写进诊断日志的 `[mem] post-load gc released NMB`。
+ *
+ * 代价是把 `gc` 暴露给了渲染进程（含第三方扩展）。它只能主动触发一次回收，
+ * 既不能读内存也不能写内存，风险和收益相比是划算的；真要滥用，效果也只是卡顿，
+ * 与一个死循环脚本同级，而扩展本来就跑在同一个渲染进程里。
+ */
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${RENDERER_HEAP_LIMIT_MB} --expose-gc`);
 
 // 用户关闭后台节流时，光靠 webContents.setBackgroundThrottling(false) 只能解除
 // "窗口不可见" 这一种节流；Chromium 还会在窗口被遮挡时降低该 renderer 的优先级、

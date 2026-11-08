@@ -19,6 +19,7 @@ const AbstractWindow = require('./abstract');
 const {isUpdateCheckerAllowed} = require('../update-checker');
 const {getDist, getPlatform} = require('../platform');
 const diagnostics = require('../diagnostics');
+const memoryTrace = require('../memory-trace');
 const packageJSON = require('../../package.json');
 
 const TYPE_FILE = 'file';
@@ -368,6 +369,11 @@ class EditorWindow extends ProjectRunningWindow {
       // 采样延迟十几秒，用户很可能已经关掉窗口或切到别的文件了，所以必须走
       // scheduleRendererHeapSample —— 它会在回调内部先检查窗口是否已销毁。
       diagnostics.scheduleRendererHeapSample(this.window, PROJECT_LOADED_HEAP_SAMPLE_DELAY_MS);
+
+      // 上面那条只留"崩溃时能看到的最后一帧"，这里补的是**完整的一次打开过程**：
+      // 5s / 20s / 60s 三个点各自的进程内存分布，外加加载完成后的一次主动回收。
+      // 日志标签是 `[mem] project-loaded+N s`，用来回答"8GB 到底在哪个进程"。
+      memoryTrace.afterProjectLoad(this.window);
 
       return {
         name,

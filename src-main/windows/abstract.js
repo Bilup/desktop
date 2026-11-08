@@ -3,6 +3,7 @@ const path = require('path');
 const openExternal = require('../open-external');
 const settings = require('../settings');
 const diagnostics = require('../diagnostics');
+const memoryTrace = require('../memory-trace');
 
 /**
  * 页面加载完成后，等这么久再采样渲染进程的堆状况 —— 要等 React 挂载、默认项目
@@ -59,6 +60,11 @@ class AbstractWindow {
       // 采样延迟十几秒，窗口那时可能早已销毁，所以必须走 scheduleRendererHeapSample：
       // 在这里直接写 this.window.webContents，会在传参阶段就抛 "Object has been destroyed"。
       diagnostics.scheduleRendererHeapSample(this.window, RENDERER_HEAP_SAMPLE_DELAY_MS);
+
+      // 周期采样默认关闭，只有 BILUP_MEMORY_TRACE 打开时才真正启动（见 memory-trace.js）。
+      // 放在这里而不是 EditorWindow，是为了让运行窗口/打包器窗口也能一起被记录 ——
+      // 那些窗口同样会吃掉几百 MB，混在一起看总量时最容易误判。
+      memoryTrace.startWindowTrace(this.window);
     });
 
     if (!options.existingWindow) {
