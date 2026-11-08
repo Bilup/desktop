@@ -2,6 +2,14 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.1.0 (2026-11-08)
+
+- Big updage for "backpack" & "block-count" & "variable-manager"
+- Add new feature "project-assets-manager"
+- Add backpack animation
+- Fix some known issues
+- Update packager (**v1.4.0** -> **v1.5.0**)
+
 # 2.0.12 (2026-10-30)
 
 - Update Electron to 43.8.4 with the latest security fixes
