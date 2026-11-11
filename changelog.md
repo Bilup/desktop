@@ -2,6 +2,12 @@ This document is the authoritative source for TurboWarp's changelogs. Everything
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.1.1 (2026-11-11)
+- Fixed a memory leak bug that occurred when the frame rate exceeded 250
+- Replaced the block rendering method with canvas rendering
+- Removed the frame rate limit
+- Added some missing English translations
+
 # 2.1.0 (2026-11-08)
 
 - Big updage for "backpack" & "block-count" & "variable-manager"

@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.1.1",
+    "date": "2026-11-11",
+    "notes": [
+      "Fixed a memory leak bug that occurred when the frame rate exceeded 250",
+      "Replaced the block rendering method with canvas rendering",
+      "Removed the frame rate limit",
+      "Added some missing English translations"
+    ]
+  },
+  {
     "version": "2.1.0",
     "date": "2026-11-08",
     "notes": [
