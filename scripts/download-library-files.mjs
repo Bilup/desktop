@@ -14,6 +14,23 @@ import { computeMD5, computeSHA256, persistentFetch } from './lib.mjs';
 const outDirectory = pathUtil.join(import.meta.dirname, '../dist-library-files');
 const noBrotli = process.argv.includes('--no-br');
 
+// Scratch 官方素材站 assets.scratch.mit.edu 在部分网络（如中国大陆）不可达，
+// 默认改从 Bilup 自建的 R2 镜像下载，文件路径与官方一致（<md5>.<ext>）。
+// 需要走官方源时：BILUP_ASSET_BASE_URL=https://assets.scratch.mit.edu
+const scratchAssetBaseURL = 'https://assets.scratch.mit.edu';
+const assetBaseURL = (
+  process.env.BILUP_ASSET_BASE_URL || 'https://assets.r2.bilup.org'
+).replace(/\/+$/, '');
+
+/**
+ * @param {string} src
+ * @returns {string}
+ */
+const resolveAssetURL = (src) => {
+  const prefix = `${scratchAssetBaseURL}/`;
+  return src.startsWith(prefix) ? `${assetBaseURL}/${src.slice(prefix.length)}` : src;
+};
+
 /**
  * @param {AssetMetadata[]} remainingAssets List of remaining assets. Modified in-place.
  */
@@ -54,7 +71,7 @@ const startDownloading = async (remainingAssets) => {
     }
 
     console.log(`Fetching ${asset.src}`);
-    const response = await persistentFetch(asset.src);
+    const response = await persistentFetch(resolveAssetURL(asset.src));
     const data = await response.arrayBuffer();
 
     const actualMD5 = computeMD5(data);
@@ -83,6 +100,7 @@ const startDownloading = async (remainingAssets) => {
 const run = async () => {
   const metadataFile = pathUtil.join(import.meta.dirname, 'library-files.json');
   const remainingAssets = JSON.parse(fs.readFileSync(metadataFile, 'utf-8'));
+  console.log(`Library asset base: ${assetBaseURL} (${remainingAssets.length} assets)`);
 
   await fsPromises.mkdir(outDirectory, {
     recursive: true

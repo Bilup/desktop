@@ -5,8 +5,11 @@ import {promisify} from 'node:util';
 import zlib from 'node:zlib';
 
 const outputDirectory = pathUtil.join(import.meta.dirname, '../dist-sp-extensions/');
+// 官网 sharkpools-extensions.vercel.app 在部分网络不可达；
+// GitHub Pages 镜像的内容与官网同源（同一仓库的静态文件），路径完全一致。
+// 需要走官网时：SP_EXTENSIONS_BASE_URL=https://sharkpools-extensions.vercel.app
 const spExtensionsBaseURL = (
-  process.env.SP_EXTENSIONS_BASE_URL || 'https://sharkpools-extensions.vercel.app'
+  process.env.SP_EXTENSIONS_BASE_URL || 'https://sharkpool-sp.github.io/SharkPools-Extensions'
 ).replace(/\/+$/, '');
 
 const brotliCompress = promisify(zlib.brotliCompress);

@@ -12,6 +12,12 @@ const localPackagerDir = process.env.BILUP_PACKAGER_DIR
 
 const localStandalonePath = pathUtil.join(localPackagerDir, 'dist', 'standalone.html');
 
+// Windows 上 npm 是 npm.cmd，spawnSync 不经过 shell 时无法执行（EINVAL，
+// status 为 null），表现为 "Packager build failed with exit code null"。
+const npmSpawnOptions = {
+  ...(process.platform === 'win32' ? { shell: true } : {})
+};
+
 const tryUseLocalPackager = () => {
   try {
     if (!fs.existsSync(localPackagerDir)) return false;
@@ -22,6 +28,7 @@ const tryUseLocalPackager = () => {
       if (!fs.existsSync(nodeModulesPath)) {
         console.log(`Installing packager dependencies in ${localPackagerDir}`);
         const install = spawnSync('npm', ['ci'], {
+          ...npmSpawnOptions,
           cwd: localPackagerDir,
           stdio: 'inherit'
         });
@@ -32,6 +39,7 @@ const tryUseLocalPackager = () => {
 
       console.log('Building standalone packager');
       const build = spawnSync('npm', ['run', 'build-standalone-prod'], {
+        ...npmSpawnOptions,
         cwd: localPackagerDir,
         stdio: 'inherit'
       });
