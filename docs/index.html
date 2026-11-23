@@ -755,7 +755,7 @@
   <script type="generated-locale-names">{"en":"English","zh-cn":"简体中文"}</script>
 
   <script>
-    const VERSION = '2.1.1';
+    const VERSION = '2.1.2';
 
     // OS-specific styles
     const getOS = () => {
@@ -1140,11 +1140,24 @@
     <h2 l10n="changelog">Changelog</h2>
     <div lang="en">
       <!-- CHANGELOG_START -->
+        <div data-version="2.1.2">
+          <h3>v2.1.2 (November 23 2026)</h3>
+          <ul>
+            <li>Updated the Settings feature (some addons have now been moved into Settings)</li>
+            <li>Fixed a bug where font previews did not take effect</li>
+            <li>Added a new feature: Performance Profiler</li>
+            <li>Improved the styling of the Frosted Glass theme</li>
+            <li>Improved the UI of some settings</li>
+            <li>Optimized block palette performance</li>
+            <li>Attempted to fix bugs in the "lazy loading of blocks" feature</li>
+            <li>Fixed several other known issues</li>
+          </ul>
+        </div>
         <div data-version="2.1.1">
           <h3>v2.1.1 (November 11 2026)</h3>
           <ul>
-            <li>Fixed a memory leak bug that occurred when the frame rate exceeded 250</li>
-            <li>Replaced the block rendering method with canvas rendering</li>
+            <li>Fixed a memory leak that occurred when the frame rate exceeded 250</li>
+            <li>Switched block rendering from DOM to canvas</li>
             <li>Removed the frame rate limit</li>
             <li>Added some missing English translations</li>
           </ul>
@@ -1152,185 +1165,185 @@
         <div data-version="2.1.0">
           <h3>v2.1.0 (November 8 2026)</h3>
           <ul>
-            <li>Big updage for "backpack" &amp; "block-count" &amp; "variable-manager"</li>
-            <li>Add new feature "project-assets-manager"</li>
-            <li>Add backpack animation</li>
-            <li>Fix some known issues</li>
-            <li>Update packager (**v1.4.0** -&gt; **v1.5.0**)</li>
+            <li>Major update to the backpack, block count and variable manager addons</li>
+            <li>Added the new "project-assets-manager" feature</li>
+            <li>Added backpack animations</li>
+            <li>Fixed several known issues</li>
+            <li>Updated the packager from v1.4.0 to v1.5.0</li>
           </ul>
         </div>
         <div data-version="2.0.12">
           <h3>v2.0.12 (October 30 2026)</h3>
           <ul>
-            <li>Update Electron to 43.8.4 with the latest security fixes</li>
-            <li>Improve safety when loading extensions</li>
-            <li>Linux: fix missing window controls on Ubuntu 24.04 Wayland</li>
+            <li>Updated Electron to 43.8.4 with the latest security fixes</li>
+            <li>Improved safety when loading extensions</li>
+            <li>Linux: fixed missing window controls on Ubuntu 24.04 with Wayland</li>
           </ul>
         </div>
         <div data-version="2.0.11">
           <h3>v2.0.11 (October 29 2026)</h3>
           <ul>
             <li>Bilup is now officially resuming updates.</li>
-            <li>Fix some serious issues</li>
-            <li>Delete some useless settings</li>
-            <li>Add menu animation &amp; now it supports 'Frosted Glass Theme' </li>
-            <li>Try improve saving speed</li>
+            <li>Fixed several serious issues</li>
+            <li>Removed some settings that were no longer useful</li>
+            <li>Added menu animations, and the menu now supports the "Frosted Glass Theme"</li>
+            <li>Improved project saving speed</li>
           </ul>
         </div>
         <div data-version="2.0.10">
           <h3>v2.0.10 (October 6 2026)</h3>
           <ul>
-            <li>The latest version update of Bilup?</li>
+            <li>Routine maintenance release with stability improvements and small fixes</li>
           </ul>
         </div>
         <div data-version="2.0.9">
           <h3>v2.0.9 (September 27 2026)</h3>
           <ul>
-            <li>Update 'Frosted Glass Theme'</li>
-            <li>Update 'Find-bar' &amp; 'Spotlight'</li>
-            <li>Improve the performance</li>
-            <li>Fix some known issues</li>
+            <li>Updated the "Frosted Glass Theme"</li>
+            <li>Updated the find bar and Spotlight</li>
+            <li>Improved overall performance</li>
+            <li>Fixed several known issues</li>
           </ul>
         </div>
         <div data-version="2.0.8">
           <h3>v2.0.8 (September 21 2026)</h3>
           <ul>
-            <li>Emergency fix for a critical issue: cann't loading local assets</li>
+            <li>Emergency fix for a critical issue: local assets could not be loaded</li>
           </ul>
         </div>
         <div data-version="2.0.7">
           <h3>v2.0.7 (September 19 2026)</h3>
           <ul>
-            <li>Big update for Git</li>
-            <li>Fix some issues about 'Frosted Glass Theme'</li>
-            <li>Fix some issues about 'Debugger'</li>
-            <li>Add 'Custom addons'</li>
+            <li>Major update for Git</li>
+            <li>Fixed several issues with the "Frosted Glass Theme"</li>
+            <li>Fixed several issues with the debugger</li>
+            <li>Added "Custom addons"</li>
           </ul>
         </div>
         <div data-version="2.0.6">
           <h3>v2.0.6 (September 17 2026)</h3>
           <ul>
-            <li>Try improve performance</li>
-            <li>Fix some known issues</li>
+            <li>Improved overall performance</li>
+            <li>Fixed several known issues</li>
           </ul>
         </div>
         <div data-version="2.0.5">
           <h3>v2.0.5 (September 13 2026)</h3>
           <ul>
-            <li>Emergency fix for a critical issue: the variable display isn't changing.</li>
-            <li>Fix some translations issues</li>
+            <li>Emergency fix for a critical issue: variable values were not updating in the editor</li>
+            <li>Fixed several translation issues</li>
           </ul>
         </div>
         <div data-version="2.0.4">
           <h3>v2.0.4 (September 7 2026)</h3>
           <ul>
-            <li>Add 'Frosted Glass Theme'</li>
-            <li>Fix some issues about theme</li>
-            <li>Delete Addons "novatheai"</li>
+            <li>Added the "Frosted Glass Theme"</li>
+            <li>Fixed several theme-related issues</li>
+            <li>Removed the "novatheai" addon</li>
           </ul>
         </div>
         <div data-version="2.0.3">
           <h3>v2.0.3 (August 22 2026)</h3>
           <ul>
-            <li>Fix an issue: unable to adjust local settings</li>
-            <li>Fix an issue about sandbox</li>
-            <li>Add "Global custom block"</li>
-            <li>Update the style of sprite/costume/background/sound selection</li>
+            <li>Fixed an issue where local settings could not be adjusted</li>
+            <li>Fixed an issue related to the sandbox</li>
+            <li>Added "Global custom block"</li>
+            <li>Updated the styling of the sprite, costume, backdrop and sound selectors</li>
           </ul>
         </div>
         <div data-version="2.0.2">
           <h3>v2.0.2 (August 15 2026)</h3>
           <ul>
-            <li>Update "Custom Extensions Library"</li>
-            <li>Emergency fix some issues: unable to use custom fonts; unable to close settings about "Windows Animations"</li>
+            <li>Updated the "Custom Extensions Library"</li>
+            <li>Emergency fix for several issues: custom fonts could not be used, and the "Windows Animations" setting could not be closed</li>
           </ul>
         </div>
         <div data-version="2.0.1">
           <h3>v2.0.1 (August 12 2026)</h3>
           <ul>
-            <li>Fix extension libraries(Sharkpool) not working in local.</li>
-            <li>Fix some translation issues.</li>
-            <li>Update extensions-manager</li>
+            <li>Fixed extension libraries (Sharkpool) not working in local</li>
+            <li>Fixed several translation issues</li>
+            <li>Updated the extensions manager</li>
           </ul>
         </div>
         <div data-version="2.0.0">
           <h3>v2.0.0 (August 9 2026)</h3>
           <ul>
-            <li>Big update is available! Now use the newest Bilup to create projects!</li>
-            <li>Fix some known issues</li>
-            <li>Improve the performance</li>
+            <li>Major update available: the new Bilup is ready for creating projects</li>
+            <li>Fixed several known issues</li>
+            <li>Improved overall performance</li>
           </ul>
         </div>
         <div data-version="1.6.1">
           <h3>v1.6.1 (July 11 2026)</h3>
           <ul>
-            <li>Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)</li>
-            <li>Fix some translation issues</li>
-            <li>Fix some known issues</li>
+            <li>Emergency fix for a critical issue: the collaboration feature could not be used (regression from v1.6.0)</li>
+            <li>Fixed several translation issues</li>
+            <li>Fixed several known issues</li>
           </ul>
         </div>
         <div data-version="1.6.0">
           <h3>v1.6.0 (July 10 2026)</h3>
           <ul>
-            <li>Big update (from MistWarp)</li>
+            <li>Major update with a large batch of changes merged from MistWarp</li>
           </ul>
         </div>
         <div data-version="1.5.4">
           <h3>v1.5.4 (July 5 2026)</h3>
           <ul>
-            <li>Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)</li>
-            <li>Fix some issues with live collaboration</li>
-            <li>Update window animations</li>
-            <li>Add 'Custom Extensions Library'</li>
+            <li>Emergency fix for a critical issue: assets and extensions could not be loaded in the desktop app (regression from v1.5.2)</li>
+            <li>Fixed several issues with live collaboration</li>
+            <li>Updated window animations</li>
+            <li>Added the "Custom Extensions Library"</li>
           </ul>
         </div>
         <div data-version="1.5.3">
           <h3>v1.5.3 (June 24 2026)</h3>
           <ul>
-            <li>Fix some known issues</li>
-            <li>Update markdown</li>
-            <li>Update shortcuts manager</li>
+            <li>Fixed several known issues</li>
+            <li>Updated Markdown support</li>
+            <li>Updated the shortcuts manager</li>
           </ul>
         </div>
         <div data-version="1.5.2">
           <h3>v1.5.2 (June 9 2026)</h3>
           <ul>
-            <li>Desktop: Fix extension libraries not working in local</li>
+            <li>Desktop: fixed extension libraries not working in local</li>
           </ul>
         </div>
         <div data-version="1.5.1">
           <h3>v1.5.1 (June 5 2026)</h3>
           <ul>
-            <li>Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)</li>
+            <li>Emergency fix for a critical issue: assets and extensions could not be loaded in the desktop app (regression from v1.5.0)</li>
           </ul>
         </div>
         <div data-version="1.5.0">
           <h3>v1.5.0 (May 23 2026)</h3>
           <ul>
-            <li>Fix some known issues</li>
-            <li>Bilup Nova is now available! Now use AI Agents to help you create projects!</li>
-            <li>Add support for `api.yearnstudio.cn`</li>
+            <li>Fixed several known issues</li>
+            <li>Bilup Nova is now available: AI agents can now help you create projects</li>
+            <li>Added support for `api.yearnstudio.cn`</li>
           </ul>
         </div>
         <div data-version="1.4.0">
           <h3>v1.4.0 (April 26 2026)</h3>
           <ul>
-            <li>Bilup extensions now available in local (No need Internet)</li>
-            <li>Add warning to uncompatible-for-turbowarp blocks</li>
-            <li>Fix some known issue (Including Git, Shortcuts Manager, and more!)</li>
-            <li>Able to save your project when editor crashed</li>
+            <li>Bilup extensions are now available offline (no Internet connection required)</li>
+            <li>Added warnings for blocks that are incompatible with TurboWarp</li>
+            <li>Fixed several known issues, including in Git and the shortcuts manager</li>
+            <li>Projects can now be saved after the editor crashes</li>
           </ul>
         </div>
         <div data-version="1.3.0">
           <h3>v1.3.0 (April 13 2026)</h3>
           <ul>
-            <li>Fix some known issues</li>
+            <li>Fixed several known issues and improved overall stability</li>
           </ul>
         </div>
         <div data-version="1.2.0">
           <h3>v1.2.0 (April 3 2026)</h3>
           <ul>
-            <li>New initial verison after cleaning desktop repo</li>
+            <li>Initial release after the desktop repository was cleaned up</li>
           </ul>
         </div>
         <!-- CHANGELOG_END -->

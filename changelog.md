@@ -1,145 +1,155 @@
-This document is the authoritative source for TurboWarp's changelogs. Everything else gets generated from this list by `node scripts/generate-changelogs.mjs`.
+This document is the authoritative source for Bilup's changelogs. Everything else gets generated from this list by `node scripts/generate-changelogs.mjs`.
 
 Prefix notes with "Windows:", "macOS:", or "Linux:" as needed. Do not use **formatting** or [links](https://desktop.bilup.org/).
 
+# 2.1.2 (2026-11-23)
+- Updated the Settings feature (some addons have now been moved into Settings)
+- Fixed a bug where font previews did not take effect
+- Added a new feature: Performance Profiler
+- Improved the styling of the Frosted Glass theme
+- Improved the UI of some settings
+- Optimized block palette performance
+- Attempted to fix bugs in the "lazy loading of blocks" feature
+- Fixed several other known issues
+
 # 2.1.1 (2026-11-11)
-- Fixed a memory leak bug that occurred when the frame rate exceeded 250
-- Replaced the block rendering method with canvas rendering
+- Fixed a memory leak that occurred when the frame rate exceeded 250
+- Switched block rendering from DOM to canvas
 - Removed the frame rate limit
 - Added some missing English translations
 
 # 2.1.0 (2026-11-08)
 
-- Big updage for "backpack" & "block-count" & "variable-manager"
-- Add new feature "project-assets-manager"
-- Add backpack animation
-- Fix some known issues
-- Update packager (**v1.4.0** -> **v1.5.0**)
+- Major update to the backpack, block count and variable manager addons
+- Added the new "project-assets-manager" feature
+- Added backpack animations
+- Fixed several known issues
+- Updated the packager from v1.4.0 to v1.5.0
 
 # 2.0.12 (2026-10-30)
 
-- Update Electron to 43.8.4 with the latest security fixes
-- Improve safety when loading extensions
-- Linux: fix missing window controls on Ubuntu 24.04 Wayland
+- Updated Electron to 43.8.4 with the latest security fixes
+- Improved safety when loading extensions
+- Linux: fixed missing window controls on Ubuntu 24.04 with Wayland
 
 # 2.0.11 (2026-10-29)
 
 - Bilup is now officially resuming updates.
-- Fix some serious issues
-- Delete some useless settings
-- Add menu animation & now it supports 'Frosted Glass Theme' 
-- Try improve saving speed
+- Fixed several serious issues
+- Removed some settings that were no longer useful
+- Added menu animations, and the menu now supports the "Frosted Glass Theme"
+- Improved project saving speed
 
 # 2.0.10 (2026-10-06)
 
-- The latest version update of Bilup?
+- Routine maintenance release with stability improvements and small fixes
 
 # 2.0.9 (2026-09-27)
 
-- Update 'Frosted Glass Theme'
-- Update 'Find-bar' & 'Spotlight'
-- Improve the performance
-- Fix some known issues
+- Updated the "Frosted Glass Theme"
+- Updated the find bar and Spotlight
+- Improved overall performance
+- Fixed several known issues
 
 # 2.0.8 (2026-09-21)
 
-- Emergency fix for a critical issue: cann't loading local assets
+- Emergency fix for a critical issue: local assets could not be loaded
 
 # 2.0.7 (2026-09-19)
 
-- Big update for Git
-- Fix some issues about 'Frosted Glass Theme'
-- Fix some issues about 'Debugger'
-- Add 'Custom addons'
+- Major update for Git
+- Fixed several issues with the "Frosted Glass Theme"
+- Fixed several issues with the debugger
+- Added "Custom addons"
 
 # 2.0.6 (2026-09-17)
 
-- Try improve performance
-- Fix some known issues
+- Improved overall performance
+- Fixed several known issues
 
 # 2.0.5 (2026-09-13)
 
-- Emergency fix for a critical issue: the variable display isn't changing.
-- Fix some translations issues
+- Emergency fix for a critical issue: variable values were not updating in the editor
+- Fixed several translation issues
 
 # 2.0.4 (2026-09-07)
 
-- Add 'Frosted Glass Theme'
-- Fix some issues about theme
-- Delete Addons "novatheai"
+- Added the "Frosted Glass Theme"
+- Fixed several theme-related issues
+- Removed the "novatheai" addon
 
 # 2.0.3 (2026-08-22)
 
-- Fix an issue: unable to adjust local settings
-- Fix an issue about sandbox
-- Add "Global custom block"
-- Update the style of sprite/costume/background/sound selection
+- Fixed an issue where local settings could not be adjusted
+- Fixed an issue related to the sandbox
+- Added "Global custom block"
+- Updated the styling of the sprite, costume, backdrop and sound selectors
 
 # 2.0.2 (2026-08-15)
 
-- Update "Custom Extensions Library"
-- Emergency fix some issues: unable to use custom fonts; unable to close settings about "Windows Animations"
+- Updated the "Custom Extensions Library"
+- Emergency fix for several issues: custom fonts could not be used, and the "Windows Animations" setting could not be closed
 
 # 2.0.1 (2026-08-12)
 
-- Fix extension libraries(Sharkpool) not working in local.
-- Fix some translation issues.
-- Update extensions-manager
+- Fixed extension libraries (Sharkpool) not working in local
+- Fixed several translation issues
+- Updated the extensions manager
 
 # 2.0.0 (2026-08-09)
 
-- Big update is available! Now use the newest Bilup to create projects!
-- Fix some known issues
-- Improve the performance
+- Major update available: the new Bilup is ready for creating projects
+- Fixed several known issues
+- Improved overall performance
 
 # 1.6.1 (2026-07-11)
 
-- Emergency fix for a critical issue: unable to use collaboration feature (from v1.6.0)
-- Fix some translation issues
-- Fix some known issues
+- Emergency fix for a critical issue: the collaboration feature could not be used (regression from v1.6.0)
+- Fixed several translation issues
+- Fixed several known issues
 
 # 1.6.0 (2026-07-10)
 
-- Big update (from MistWarp)
+- Major update with a large batch of changes merged from MistWarp
 
 # 1.5.4 (2026-07-05)
 
-- Fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.2)
-- Fix some issues with live collaboration
-- Update window animations
-- Add 'Custom Extensions Library'
+- Emergency fix for a critical issue: assets and extensions could not be loaded in the desktop app (regression from v1.5.2)
+- Fixed several issues with live collaboration
+- Updated window animations
+- Added the "Custom Extensions Library"
 
 # 1.5.3 (2026-06-24)
 
-- Fix some known issues
-- Update markdown
-- Update shortcuts manager
+- Fixed several known issues
+- Updated Markdown support
+- Updated the shortcuts manager
 
 # 1.5.2 (2026-06-09)
 
-- Desktop: Fix extension libraries not working in local
+- Desktop: fixed extension libraries not working in local
 
 # 1.5.1 (2026-06-05)
 
-- Emergency fix for a critical issue: unable to load assets and extensions in desktop (from v1.5.0)
+- Emergency fix for a critical issue: assets and extensions could not be loaded in the desktop app (regression from v1.5.0)
 
 # 1.5.0 (2026-05-23)
 
-- Fix some known issues
-- Bilup Nova is now available! Now use AI Agents to help you create projects!
-- Add support for `api.yearnstudio.cn`
+- Fixed several known issues
+- Bilup Nova is now available: AI agents can now help you create projects
+- Added support for `api.yearnstudio.cn`
 
 # 1.4.0 (2026-04-26)
 
-- Bilup extensions now available in local (No need Internet)
-- Add warning to uncompatible-for-turbowarp blocks
-- Fix some known issue (Including Git, Shortcuts Manager, and more!)
-- Able to save your project when editor crashed
+- Bilup extensions are now available offline (no Internet connection required)
+- Added warnings for blocks that are incompatible with TurboWarp
+- Fixed several known issues, including in Git and the shortcuts manager
+- Projects can now be saved after the editor crashes
 
 # 1.3.0 (2026-04-13)
 
-- Fix some known issues
+- Fixed several known issues and improved overall stability
 
 # 1.2.0 (2026-04-03)
 
-- New initial verison after cleaning desktop repo
+- Initial release after the desktop repository was cleaned up
