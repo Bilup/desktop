@@ -76,7 +76,15 @@ const isAlreadyDownloaded = () => {
   return false;
 };
 
-const usedLocal = tryUseLocalPackager();
+// 远端 CI 不允许回退到本地源码目录。runner 上本不该有 ../packager，但一旦出现
+// （自定义镜像、submodule、上一轮残留），本地构建会静默替换发布产物，让
+// packager.json 锁定的版本失效，而日志看起来一切正常。需要显式放开时用
+// BILUP_PACKAGER_ALLOW_LOCAL=1。
+const allowLocalPackager = !process.env.CI || process.env.BILUP_PACKAGER_ALLOW_LOCAL === '1';
+if (!allowLocalPackager) {
+  console.log('CI 环境：跳过本地 packager 源码目录，强制使用 packager.json 锁定的发布产物');
+}
+const usedLocal = allowLocalPackager ? tryUseLocalPackager() : false;
 
 if (usedLocal) {
   process.exit(0);
